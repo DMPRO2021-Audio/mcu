@@ -1,0 +1,22 @@
+# IDEs
+.vscode/
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.exe
+
+
+# builds
+*.o
+*.bin
+*.elf
+target/
+build/
