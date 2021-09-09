@@ -3,8 +3,8 @@
 set -e
 
 sdk_archive="$1"
-dir=./sdk
-makefile=./sdk.mk
+dir=sdk
+makefile=sdk.mk
 makefile_prefix="SDK_"
 
 srcfiles='
