@@ -16,6 +16,7 @@ $RECYCLE.BIN/
 
 # builds
 *.o
+*.a
 *.bin
 *.elf
 target/

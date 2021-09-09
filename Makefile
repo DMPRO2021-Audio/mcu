@@ -7,6 +7,7 @@ include sdk.mk
 MACHFLAGS += -mcpu=cortex-m3 -mthumb
 CFLAGS += $(MACHFLAGS) -D EFM32GG990F1024 $(SDK_INCDIRS:%=-I %)
 LDFLAGS += $(MACHFLAGS) -T$(SDK_LDSCRIPT)
+ARFLAGS += -U
 
 CC = arm-none-eabi-gcc
 AR = arm-none-eabi-ar
