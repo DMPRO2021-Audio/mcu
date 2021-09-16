@@ -26,6 +26,11 @@ clean:
 	-rm -rf deps/
 	-rm -f program.bin program.elf libsdk.a $(OBJS) $(SDK_OBJS)
 
+.PHONY: flash
+
+flash:
+	commander flash program.bin
+
 .SUFFIXES: .bin .elf .c .o .a
 
 .elf.bin:
