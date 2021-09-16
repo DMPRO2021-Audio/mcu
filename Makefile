@@ -28,7 +28,7 @@ clean:
 
 .PHONY: flash
 
-flash:
+flash: program.bin
 	commander flash program.bin
 
 .SUFFIXES: .bin .elf .c .o .a
