@@ -5,7 +5,7 @@ OBJS = test.o
 include sdk.mk
 
 MACHFLAGS = -mcpu=cortex-m3 -mthumb
-CFLAGS += $(MACHFLAGS) -D EFM32GG990F1024 $(SDK_INCDIRS:%=-I '%')
+CFLAGS += $(MACHFLAGS) -D EFM32GG990F1024 -I config/ $(SDK_INCDIRS:%=-I '%')
 LDFLAGS += $(MACHFLAGS) -T$(SDK_LDSCRIPT)
 ARFLAGS += -U
 

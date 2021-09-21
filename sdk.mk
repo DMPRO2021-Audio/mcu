@@ -37,6 +37,10 @@ SDK_OBJS += \
 	sdk/platform/emlib/src/em_usart.o\
 	sdk/platform/emlib/src/em_vcmp.o\
 	sdk/platform/emlib/src/em_wdog.o\
+	sdk/platform/emdrv/dmadrv/src/dmadrv.o\
+	sdk/platform/emdrv/gpiointerrupt/src/gpiointerrupt.o\
+	sdk/platform/emdrv/rtcdrv/src/rtcdriver.o\
+	sdk/platform/emdrv/spidrv/src/spidrv.o\
 	sdk/platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.o\
 	sdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/startup_efm32gg.o\
 	sdk/hardware/kit/common/bsp/bsp_bcc.o\
@@ -47,12 +51,19 @@ SDK_OBJS += \
 	sdk/hardware/kit/common/bsp/bsp_stk.o\
 	sdk/hardware/kit/common/bsp/bsp_stk_leds.o\
 	sdk/hardware/kit/common/bsp/bsp_trace.o\
+	sdk/hardware/kit/common/drivers/dmactrl.o\
 
 SDK_INCDIRS += \
 	sdk/platform/CMSIS/Include/\
 	sdk/platform/emlib/inc/\
+	sdk/platform/emdrv/common/inc/\
+	sdk/platform/emdrv/dmadrv/inc/\
+	sdk/platform/emdrv/gpiointerrupt/inc/\
+	sdk/platform/emdrv/rtcdrv/inc/\
+	sdk/platform/emdrv/spidrv/inc/\
 	sdk/platform/Device/SiliconLabs/EFM32GG/Include/\
 	sdk/hardware/kit/common/bsp/\
+	sdk/hardware/kit/common/drivers/\
 	sdk/hardware/kit/EFM32GG_STK3700/config/\
 
 SDK_LDSCRIPT = sdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/efm32gg.ld
