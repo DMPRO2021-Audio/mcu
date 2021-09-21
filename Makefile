@@ -12,6 +12,7 @@ ARFLAGS += -U
 CC = arm-none-eabi-gcc
 AR = arm-none-eabi-ar
 OBJCOPY = arm-none-eabi-objcopy
+SIMPLICITY_COMMANDER ?= commander
 
 program.bin: program.elf
 
@@ -27,7 +28,7 @@ clean:
 	-rm -f program.bin program.elf libsdk.a $(OBJS) $(SDK_OBJS)
 
 flash: program.bin
-	commander flash program.bin
+	$(SIMPLICITY_COMMANDER) flash program.bin
 
 .SUFFIXES: .bin .elf .c .o .a
 
