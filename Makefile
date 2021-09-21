@@ -16,17 +16,15 @@ OBJCOPY = arm-none-eabi-objcopy
 program.bin: program.elf
 
 program.elf: $(OBJS) libsdk.a
-	$(CC) -L . -l sdk $(LDFLAGS) -o '$@' $(OBJS)
+	$(CC) $(LDFLAGS) -o '$@' $(OBJS) -L . -l sdk
 
 libsdk.a: ${SDK_OBJS:%=libsdk.a(%)}
 
-.PHONY: clean
+.PHONY: clean flash
 
 clean:
 	-rm -rf deps/
 	-rm -f program.bin program.elf libsdk.a $(OBJS) $(SDK_OBJS)
-
-.PHONY: flash
 
 flash: program.bin
 	commander flash program.bin
