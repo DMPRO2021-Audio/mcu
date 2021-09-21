@@ -11,6 +11,7 @@ srcfiles='
 	platform/emlib/src/*.c
 	platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.c
 	platform/Device/SiliconLabs/EFM32GG/Source/GCC/startup_efm32gg.c
+	hardware/kit/common/bsp/*.c
 '
 
 incdirs='

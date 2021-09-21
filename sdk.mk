@@ -39,6 +39,14 @@ SDK_OBJS += \
 	sdk/platform/emlib/src/em_wdog.o\
 	sdk/platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.o\
 	sdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/startup_efm32gg.o\
+	sdk/hardware/kit/common/bsp/bsp_bcc.o\
+	sdk/hardware/kit/common/bsp/bsp_dk_3200.o\
+	sdk/hardware/kit/common/bsp/bsp_dk_3201.o\
+	sdk/hardware/kit/common/bsp/bsp_dk_leds.o\
+	sdk/hardware/kit/common/bsp/bsp_dk_mcuboard.o\
+	sdk/hardware/kit/common/bsp/bsp_stk.o\
+	sdk/hardware/kit/common/bsp/bsp_stk_leds.o\
+	sdk/hardware/kit/common/bsp/bsp_trace.o\
 
 SDK_INCDIRS += \
 	sdk/platform/CMSIS/Include/\
