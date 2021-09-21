@@ -43,7 +43,7 @@ int main(void) {
 
 		SPIDRV_Init(spi, &spi_init);
 		SPIDRV_MTransmitB(spi, &buf, 1);
-		__WFI();
+		while (buf == counter) __WFI();
 	}
 }
 
