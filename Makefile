@@ -1,6 +1,6 @@
 .POSIX:
 
-OBJS = test.o
+OBJS = main.o synth.o
 
 include sdk.mk
 
