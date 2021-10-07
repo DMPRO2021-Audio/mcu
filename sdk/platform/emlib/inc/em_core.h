@@ -1,32 +1,30 @@
 /***************************************************************************//**
- * @file em_core.h
+ * @file
  * @brief Core interrupt handling API
- * @version 5.0.0
  *******************************************************************************
- * @section License
- * <b>Copyright 2016 Silicon Laboratories, Inc. http://www.silabs.com</b>
+ * # License
+ * <b>Copyright 2018 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
+ *
+ * SPDX-License-Identifier: Zlib
+ *
+ * The licensor of this software is Silicon Laboratories Inc.
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
  *
  * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely, subject to the following restrictions:
  *
  * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software.@n
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
  * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.@n
+ *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
- *
- * DISCLAIMER OF WARRANTY/LIMITATION OF REMEDIES: Silicon Labs has no
- * obligation to support this Software. Silicon Labs is providing the
- * Software "AS IS", with no express or implied warranties of any kind,
- * including, but not limited to, any implied warranties of merchantability
- * or fitness for any particular purpose or warranties against infringement
- * of any proprietary rights of a third party.
- *
- * Silicon Labs will not be liable for any consequential, incidental, or
- * special damages, or any other relief, or for any claim by any third party,
- * arising from your use of this Software.
  *
  ******************************************************************************/
 #ifndef EM_CORE_H
@@ -37,13 +35,28 @@
 
 #include <stdbool.h>
 
-/***************************************************************************//**
- * @addtogroup emlib
- * @{
- ******************************************************************************/
+#if defined(EMLIB_USER_CONFIG)
+#include "emlib_config.h"
+#endif
+
+#if defined(SL_COMPONENT_CATALOG_PRESENT)
+#include "sl_component_catalog.h"
+#endif
+
+#if defined(SL_CATALOG_EMLIB_CORE_DEBUG_CONFIG_PRESENT)
+#include "emlib_core_debug_config.h"
+#endif
+
+#if !defined(SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING)
+#define SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING   0
+#endif
+
+#if (SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING == 1)
+#include "sl_cycle_counter.h"
+#endif
 
 /***************************************************************************//**
- * @addtogroup CORE
+ * @addtogroup core
  * @{
  ******************************************************************************/
 
@@ -62,6 +75,54 @@
 
 /** Number of entries in a default interrupt vector table. */
 #define CORE_DEFAULT_VECTOR_TABLE_ENTRIES   (EXT_IRQ_COUNT + 16)
+
+// Interrupt priorities based on processor architecture
+#if defined(__CM3_REV) || defined(__CM4_REV) || defined(__CM7_REV) \
+  || defined(__CM23_REV) || defined(__CM33_REV)
+
+/** Highest priority for core interrupt. */
+#define CORE_INTERRUPT_HIGHEST_PRIORITY 0
+
+/** Default priority for core interrupt. */
+#define CORE_INTERRUPT_DEFAULT_PRIORITY 5
+
+/** Lowest priority for core interrupt. */
+#define CORE_INTERRUPT_LOWEST_PRIORITY 7
+
+/** Default method to disable interrupts in ATOMIC sections. */
+#define CORE_ATOMIC_METHOD_DEFAULT  CORE_ATOMIC_METHOD_BASEPRI
+#elif defined(__CM0_REV) || defined(__CM0PLUS_REV)
+
+/** Highest priority for core interrupt. */
+#define CORE_INTERRUPT_HIGHEST_PRIORITY 0
+
+/** Default priority for core interrupt. */
+#define CORE_INTERRUPT_DEFAULT_PRIORITY 1
+
+/** Lowest priority for core interrupt. */
+#define CORE_INTERRUPT_LOWEST_PRIORITY 3
+
+/** Default method to disable interrupts in ATOMIC sections. */
+#define CORE_ATOMIC_METHOD_DEFAULT  CORE_ATOMIC_METHOD_PRIMASK
+#endif
+
+#if !defined(CORE_ATOMIC_BASE_PRIORITY_LEVEL)
+/** The interrupt priority level disabled within ATOMIC regions. Interrupts
+ *  with priority level equal to or lower than this definition will be disabled
+ *  within ATOMIC regions. */
+#define CORE_ATOMIC_BASE_PRIORITY_LEVEL  3
+#endif
+
+#if !defined(CORE_ATOMIC_METHOD)
+/** Specify which method to use when implementing ATOMIC sections. You can
+ *  select between BASEPRI or PRIMASK method.
+ *  @note On Cortex-M0+ devices only PRIMASK can be used. */
+#if !defined(SL_CATALOG_DEVICE_INIT_NVIC_PRESENT)
+#define CORE_ATOMIC_METHOD    CORE_ATOMIC_METHOD_PRIMASK
+#else
+#define CORE_ATOMIC_METHOD   CORE_ATOMIC_METHOD_DEFAULT
+#endif
+#endif
 
 // Compile time sanity check.
 #if (CORE_NVIC_REG_WORDS > 3)
@@ -92,14 +153,14 @@ extern "C" {
 
 /** Convenience macro for implementing a CRITICAL section. */
 #define CORE_CRITICAL_SECTION(yourcode) \
-{                                       \
-  CORE_DECLARE_IRQ_STATE;               \
-  CORE_ENTER_CRITICAL();                \
   {                                     \
-    yourcode                            \
-  }                                     \
-  CORE_EXIT_CRITICAL();                 \
-}
+    CORE_DECLARE_IRQ_STATE;             \
+    CORE_ENTER_CRITICAL();              \
+    {                                   \
+      yourcode                          \
+    }                                   \
+    CORE_EXIT_CRITICAL();               \
+  }
 
 /** Enter CRITICAL section. Assumes that a @ref CORE_DECLARE_IRQ_STATE exist in
  *  scope. */
@@ -110,7 +171,7 @@ extern "C" {
 #define CORE_EXIT_CRITICAL()    CORE_ExitCritical(irqState)
 
 /** CRITICAL style yield. */
-#define CORE_YIELD_CRITICAL()   CORE_YieldCritical(void)
+#define CORE_YIELD_CRITICAL()   CORE_YieldCritical()
 
 //
 //  ATOMIC section macro API.
@@ -124,14 +185,14 @@ extern "C" {
 
 /** Convenience macro for implementing an ATOMIC section. */
 #define CORE_ATOMIC_SECTION(yourcode) \
-{                                     \
-  CORE_DECLARE_IRQ_STATE;             \
-  CORE_ENTER_ATOMIC();                \
   {                                   \
-    yourcode                          \
-  }                                   \
-  CORE_EXIT_ATOMIC();                 \
-}
+    CORE_DECLARE_IRQ_STATE;           \
+    CORE_ENTER_ATOMIC();              \
+    {                                 \
+      yourcode                        \
+    }                                 \
+    CORE_EXIT_ATOMIC();               \
+  }
 
 /** Enter ATOMIC section. Assumes that a @ref CORE_DECLARE_IRQ_STATE exist in
  *  scope. */
@@ -142,7 +203,7 @@ extern "C" {
 #define CORE_EXIT_ATOMIC()    CORE_ExitAtomic(irqState)
 
 /** ATOMIC style yield. */
-#define CORE_YIELD_ATOMIC()   CORE_YieldAtomic(void)
+#define CORE_YIELD_ATOMIC()   CORE_YieldAtomic()
 
 //
 //  NVIC mask section macro API.
@@ -160,7 +221,7 @@ extern "C" {
 /** Allocate storage for and zero initialize NVIC interrupt mask.
  *  @param[in] x
  *    The storage variable name to use.*/
-#define CORE_DECLARE_NVIC_ZEROMASK(x) CORE_nvicMask_t x = {{0}}
+#define CORE_DECLARE_NVIC_ZEROMASK(x) CORE_nvicMask_t x = { { 0 } }
 
 /** NVIC mask style interrupt disable.
  *  @param[in] mask
@@ -177,21 +238,21 @@ extern "C" {
  *    Mask specifying which NVIC interrupts to disable within the section.
  *  @param[in] yourcode
  *    The code for the section. */
-#define CORE_NVIC_SECTION(mask, yourcode)   \
-{                                           \
-  CORE_DECLARE_NVIC_STATE;                  \
-  CORE_ENTER_NVIC(mask);                    \
-  {                                         \
-    yourcode                                \
-  }                                         \
-  CORE_EXIT_NVIC();                         \
-}
+#define CORE_NVIC_SECTION(mask, yourcode) \
+  {                                       \
+    CORE_DECLARE_NVIC_STATE;              \
+    CORE_ENTER_NVIC(mask);                \
+    {                                     \
+      yourcode                            \
+    }                                     \
+    CORE_EXIT_NVIC();                     \
+  }
 
 /** Enter NVIC mask section. Assumes that a @ref CORE_DECLARE_NVIC_STATE exist
  *  in scope.
  *  @param[in] disable
  *    Mask specifying which NVIC interrupts to disable within the section. */
-#define CORE_ENTER_NVIC(disable)  CORE_EnterNvicMask(&nvicState,disable)
+#define CORE_ENTER_NVIC(disable)  CORE_EnterNvicMask(&nvicState, disable)
 
 /** Exit NVIC mask section. Assumes that a @ref CORE_DECLARE_NVIC_STATE exist
  *  in scope. */
@@ -211,6 +272,19 @@ extern "C" {
 
 /** Check if inside an IRQ handler. */
 #define CORE_IN_IRQ_CONTEXT()     CORE_InIrqContext()
+
+// Support for cycle counter
+#if (SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING == 1)
+/** Start counter. */
+#define START_COUNTER(handle) sl_cycle_counter_start(handle)
+/** Stop counter. */
+#define STOP_COUNTER(handle) sl_cycle_counter_stop(handle)
+#else
+/** Start counter. */
+#define START_COUNTER(handle)
+/** Stop counter. */
+#define STOP_COUNTER(handle)
+#endif
 
 /*******************************************************************************
  *************************   TYPEDEFS   ****************************************
@@ -265,11 +339,15 @@ void  CORE_InitNvicVectorTable(uint32_t *sourceTable,
                                void *defaultHandler,
                                bool overwriteActive);
 
+#if (SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING == 1)
+uint32_t CORE_get_max_time_critical_section(void);
+uint32_t CORE_get_max_time_atomic_section(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
 
-/** @} (end addtogroup CORE) */
-/** @} (end addtogroup emlib) */
+/** @} (end addtogroup core) */
 
 #endif /* EM_CORE_H */

@@ -22,3 +22,4 @@ $RECYCLE.BIN/
 target/
 build/
 deps/
+sdk/
