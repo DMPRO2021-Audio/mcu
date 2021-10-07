@@ -12,7 +12,7 @@ const uint32_t OVS = 16;
 static GPIO_P_TypeDef * const GPIOE = &(GPIO->P[4]); // RX/TX Port
 static GPIO_P_TypeDef * const GPIOF = &(GPIO->P[5]); // Transceiver
 
-DECLARE_BUFFER_AREA(rxBufferArea, BUFFERSIZE);
+unsigned rxBufferArea[(sizeof(struct buffer_s) + BUFFERSIZE + sizeof(unsigned)-1)/sizeof(unsigned)];
 
 buffer rxBuffer = 0;
 
