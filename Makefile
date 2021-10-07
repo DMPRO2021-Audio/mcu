@@ -24,7 +24,7 @@ LIBM = arm_cortexM3l_math
 
 #### choose one ####
 
-CFLAGS += $(MACHFLAGS) -I config/
+CFLAGS += $(MACHFLAGS) -I config/ -g
 LDFLAGS += $(MACHFLAGS) -L sdk/platform/CMSIS/Lib/
 ARFLAGS += -U
 
