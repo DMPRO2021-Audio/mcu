@@ -1,10 +1,10 @@
 .POSIX:
 
-OBJS = main.o synth.o
+OBJS = main.o uart.o buffer.o clock_efm32gg_ext.o
 
 include sdk.mk
 
-MACHFLAGS = -mcpu=cortex-m3 -mthumb
+MACHFLAGS = -mcpu=cortex-m3 -mthumb -specs=nosys.specs
 CFLAGS += $(MACHFLAGS) -D EFM32GG990F1024 -I config/ $(SDK_INCDIRS:%=-I '%')
 LDFLAGS += $(MACHFLAGS) -T$(SDK_LDSCRIPT)
 ARFLAGS += -U
