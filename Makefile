@@ -10,7 +10,6 @@ OBJS += \
 MACHFLAGS = -mcpu=cortex-m3
 CFLAGS += -D EFM32GG990F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG/Include/
 LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/efm32gg.ld
-LIBM = arm_cortexM3l_math
 
 #### for EFM32GG12B810F1024 (Thunderboard and PCB) ####
 
@@ -20,7 +19,6 @@ LIBM = arm_cortexM3l_math
 #MACHFLAGS = -mcpu=cortex-m4
 #CFLAGS += -D EFM32GG12B810F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/
 #LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/efm32gg12b.ld
-#LIBM = arm_cortexM4l_math
 
 #### choose one ####
 
