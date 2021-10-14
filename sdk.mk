@@ -51,6 +51,7 @@ SDK_OBJS += \
 	sdk/hardware/kit/common/bsp/bsp_stk_leds.o\
 	sdk/hardware/kit/common/bsp/bsp_trace.o\
 	sdk/hardware/kit/common/drivers/dmactrl.o\
+	# sdk/hardware/kit/common/drivers/segmentlcd.o\
 
 SDK_INCDIRS += \
 	sdk/platform/CMSIS/Include/\

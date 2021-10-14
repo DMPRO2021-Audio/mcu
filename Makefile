@@ -1,12 +1,13 @@
 .POSIX:
 
-OBJS = main.o synth.o
+# OBJS = main.o synth.o
+OBJS = arp_test.o
 
 include sdk.mk
 
 MACHFLAGS = -mcpu=cortex-m3 -mthumb
 CFLAGS += $(MACHFLAGS) -D EFM32GG990F1024 -I config/ $(SDK_INCDIRS:%=-I '%')
-LDFLAGS += $(MACHFLAGS) -T$(SDK_LDSCRIPT)
+LDFLAGS += $(MACHFLAGS) -T$(SDK_LDSCRIPT) --specs=nosys.specs
 ARFLAGS += -U
 
 CC = arm-none-eabi-gcc
