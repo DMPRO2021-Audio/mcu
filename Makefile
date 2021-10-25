@@ -1,6 +1,6 @@
 .POSIX:
 
-OBJS = main.o usart.o buffer.o midi.o clock_efm32gg_ext.o
+OBJS = main.o usart.o circular_buffer.o midi.o clock_efm32gg_ext.o
 
 include sdk.mk
 
