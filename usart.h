@@ -4,5 +4,5 @@
 
 void uart_init(void);
 uint8_t uart_next_byte(void);
-uint8_t uart_next_nonzero_byte(void);
+uint8_t uart_next_valid_byte(void);
 #endif

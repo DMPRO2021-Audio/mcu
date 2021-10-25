@@ -42,24 +42,23 @@ int main(void) {
 
     volatile uint8_t byte;
     while(1) {
-        byte = uart_next_byte();
+        byte = uart_next_valid_byte();
 
         if (is_status_byte(byte)) {
             if (is_command(byte, NOTE_OFF)) {
                 /* turn note off*/
                 char out[16];
-                uint8_t key = uart_next_nonzero_byte();
+                uint8_t key = uart_next_valid_byte();
                 sprintf(out, "X %s %d", (get_note(key)).s, get_octave(key));
                 SegmentLCD_Write((const char *)out);
-                (void) uart_next_byte();
+                (void) uart_next_valid_byte();
             } else if (is_command(byte, NOTE_ON)) {
                 /* turn note on*/
                 char out[16];
-                uint8_t key = uart_next_nonzero_byte();
+                uint8_t key = uart_next_valid_byte();
                 sprintf(out, "O %s %d", (get_note(key)).s, get_octave(key));
-                SegmentLCD_Write("");
                 SegmentLCD_Write((const char *)out);
-                (void) uart_next_byte();
+                (void) uart_next_valid_byte();
             }
         }
 

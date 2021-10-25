@@ -13,6 +13,8 @@
 const uint32_t BAUD = 31250;
 const uint32_t OVS = 16;
 
+#define UART_EMPTY 0xFF
+
 circular_buffer_t circular_buffer;
 
 void uart_init(void) {
@@ -56,7 +58,7 @@ uint8_t uart_next_byte(void) {
     uint8_t ch;
 
     if(circular_buffer_empty(&circular_buffer)) {
-        return 0;
+        return UART_EMPTY;
     }
 
     __disable_irq();
@@ -65,11 +67,11 @@ uint8_t uart_next_byte(void) {
     return ch;
 }
 
-uint8_t uart_next_nonzero_byte(void)
+uint8_t uart_next_valid_byte(void)
 {
     uint8_t byte = 0;
     do {
         byte = uart_next_byte();
-    } while (byte == 0);
+    } while (byte == UART_EMPTY);
     return byte;
 }
