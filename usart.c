@@ -1,9 +1,9 @@
-#include <stdint.h>
 #include <em_device.h>
 #include <em_gpio.h>
 #include <em_cmu.h>
 #include "clock_efm32gg_ext.h"
 #include <em_usart.h>
+#include <stdint.h>
 
 #include "circular_buffer.h"
 
@@ -36,7 +36,6 @@ void uart_init(void) {
     circular_buffer_init(&circular_buffer);
 
     USART_IntEnable(USART1, USART_IEN_RXDATAV);
-
     NVIC_SetPriority(USART1_RX_IRQn, INTERRUPTLVL);
     NVIC_ClearPendingIRQ(USART1_RX_IRQn);
     NVIC_EnableIRQ(USART1_RX_IRQn);
@@ -49,7 +48,6 @@ void USART1_RX_IRQHandler(void) {
     if(USART1->IF & (USART_IF_RXDATAV | USART_IF_RXFULL)) {
         ch = USART1->RXDATA;
         circular_buffer_push(&circular_buffer, ch);
-        // (void) bufferInsert(rxBuffer, ch);
     }
 }
 
@@ -67,6 +65,9 @@ uint8_t uart_next_byte(void) {
     return ch;
 }
 
+/* The function `uart_next_byte` will return UART_EMPTY if the circular buffer
+ * is empty. To guarantee a valid byte, `uart_next_valid_byte` polls until the
+ * circular buffer is non-empty*/
 uint8_t uart_next_valid_byte(void)
 {
     uint8_t byte = 0;

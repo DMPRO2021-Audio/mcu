@@ -1,6 +1,6 @@
 .POSIX:
 
-OBJS = main.o usart.o circular_buffer.o midi.o clock_efm32gg_ext.o
+OBJS = main.o usart.o circular_buffer.o midi.o clock_efm32gg_ext.o swo.o
 
 include sdk.mk
 
@@ -8,6 +8,8 @@ MACHFLAGS = -mcpu=cortex-m3 -mthumb -specs=nosys.specs
 CFLAGS += $(MACHFLAGS) -D EFM32GG990F1024 -I config/ $(SDK_INCDIRS:%=-I '%')
 LDFLAGS += $(MACHFLAGS) -T$(SDK_LDSCRIPT)
 ARFLAGS += -U
+
+CFLAGS += -Wall -Wextra -Wswitch
 
 CC = arm-none-eabi-gcc
 AR = arm-none-eabi-ar
