@@ -9,6 +9,9 @@
 
 #define ENVELOPE_STEP(delta_lvl, delta_time) {LVLS32(delta_lvl) / (delta_time), (delta_time)}
 
+#define SYNTH_WAVEGEN_COUNT 16
+#define WAVEGEN_ENVELOPE_LENGTH 8
+
 enum {
     WAVEGEN_SHAPE_NONE,
     WAVEGEN_SHAPE_SAWTOOTH,
@@ -34,7 +37,7 @@ typedef volatile struct PACKED {
 typedef volatile struct PACKED {
     uint32_t freq;
     uint32_t vol;
-    EnvelopeStep vol_envelope[8];
+    EnvelopeStep vol_envelope[WAVEGEN_ENVELOPE_LENGTH];
     uint8_t shape;
     uint8_t cmds;
 } WaveGen;
@@ -59,7 +62,7 @@ typedef volatile struct PACKED {
 } Reverb;
 
 typedef volatile struct PACKED {
-    WaveGen wavegens[16];
+    WaveGen wavegens[SYNTH_WAVEGEN_COUNT];
     Echo echo;
     Pan pan;
     Reverb reverb;
