@@ -1,7 +1,6 @@
 #include <em_device.h>
 #include <em_gpio.h>
 #include <em_cmu.h>
-#include "clock_efm32gg_ext.h"
 #include <em_usart.h>
 #include <stdint.h>
 
@@ -28,9 +27,10 @@ void uart_init(void) {
     init.oversampling = usartOVS16;
     USART_InitAsync(UART0, &init);
 
-    bauddiv = (ClockGetPeripheralClockFrequency()*4)/(OVS*BAUD)-4;
+    bauddiv = 24320;
     UART0->CLKDIV = bauddiv<<_UART_CLKDIV_DIV_SHIFT;
-    UART0->ROUTE = UART_ROUTE_LOCATION_LOC2 | UART_ROUTE_RXPEN;
+    UART0->ROUTELOC0 = UART_ROUTELOC0_RXLOC_LOC2;
+    UART0->ROUTEPEN = UART_ROUTEPEN_RXPEN;
 
     /* Setup the buffer that stores the incoming MIDI messages */
     circular_buffer_init(&circular_buffer);
