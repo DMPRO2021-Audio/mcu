@@ -35,7 +35,10 @@ SPIDRV_HandleData_t synth_spi;
 
 SPIDRV_Init_t synth_spi_init = {
     .port = USART1,
-    .portLocation = _USART_ROUTE_LOCATION_LOC1,
+    .portLocationTx = USART_ROUTELOC0_TXLOC_LOC1,
+    .portLocationRx = USART_ROUTELOC0_RXLOC_LOC1,
+    .portLocationClk = USART_ROUTELOC0_CLKLOC_LOC1,
+    .portLocationCs = USART_ROUTELOC0_CSLOC_LOC1,
     .bitRate = 1000000,
     .frameLength = 8,
     .type = spidrvMaster,
@@ -78,7 +81,8 @@ static void note_on(char note, char velocity) {
 
     note_wavegens[note] = idx; /* TODO: what if note is already on? */
     w = &synth.wavegens[idx];
-    w->freq = notes[note];
+//    w->freq = notes[note];
+    w->freq = 440;
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
 }
 
