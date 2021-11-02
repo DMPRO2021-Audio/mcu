@@ -4,21 +4,21 @@ OBJS = main.o synth.o usart.o queue.o swo.o circular_buffer.o clock_efm32gg_ext.
 
 #### for EFM32GG990F1024 (Giant Gecko dev kit) ####
 
-OBJS += \
-    sdk/platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.o\
-    sdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/startup_efm32gg.o
-MACHFLAGS = -mcpu=cortex-m3
-CFLAGS += -D EFM32GG990F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG/Include/
-LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/efm32gg.ld
+#OBJS += \
+#    sdk/platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.o\
+#    sdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/startup_efm32gg.o
+#MACHFLAGS = -mcpu=cortex-m3
+#CFLAGS += -D EFM32GG990F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG/Include/
+#LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/efm32gg.ld
 
 #### for EFM32GG12B810F1024 (Thunderboard and PCB) ####
 
-#OBJS += \
-#    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/system_efm32gg12b.o\
-#    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/startup_efm32gg12b.o
-#MACHFLAGS = -mcpu=cortex-m4
-#CFLAGS += -D EFM32GG12B810F1024GQ64 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/
-#LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/efm32gg12b.ld
+OBJS += \
+    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/system_efm32gg12b.o\
+    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/startup_efm32gg12b.o
+MACHFLAGS = -mcpu=cortex-m4
+CFLAGS += -D EFM32GG12B810F1024GQ64 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/
+LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/efm32gg12b.ld
 
 #### choose one ####
 
