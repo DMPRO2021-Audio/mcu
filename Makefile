@@ -1,6 +1,6 @@
 .POSIX:
 
-OBJS = main.o synth.o usart.o queue.o swo.o circular_buffer.o clock_efm32gg_ext.o
+OBJS = main.o synth.o usart.o queue.o circular_buffer.o
 
 #### for EFM32GG990F1024 (Giant Gecko dev kit) ####
 

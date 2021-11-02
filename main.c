@@ -11,7 +11,6 @@
 #include "util.h"
 #include "midi.h"
 #include "queue.h"
-#include "swo.h"
 #include "synth.h"
 #include "usart.h"
 
@@ -104,7 +103,6 @@ static void note_off(char note, char velocity) {
 
 int main(void) {
     CHIP_Init();
-    SWO_Setup();
     CMU_ClockEnable(cmuClock_GPIO, true);
     SPIDRV_Init(&synth_spi, &synth_spi_init);
 
