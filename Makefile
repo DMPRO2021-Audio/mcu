@@ -14,10 +14,10 @@ LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/efm32gg.ld
 #### for EFM32GG12B810F1024 (Thunderboard and PCB) ####
 
 #OBJS += \
-#    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/system_efm32gg12b.c\
-#    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/startup_efm32gg12b.c
+#    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/system_efm32gg12b.o\
+#    sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/startup_efm32gg12b.o
 #MACHFLAGS = -mcpu=cortex-m4
-#CFLAGS += -D EFM32GG12B810F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/
+#CFLAGS += -D EFM32GG12B810F1024GQ64 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/
 #LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/efm32gg12b.ld
 
 #### choose one ####
@@ -48,6 +48,7 @@ clean:
 
 flash: program.bin
 	$(SIMPLICITY_COMMANDER) flash program.bin
+	$(SIMPLICITY_COMMANDER) flash --device EFM32GG12B810F1024GQ64 program.bin
 
 .SUFFIXES: .bin .elf .c .o .a
 
