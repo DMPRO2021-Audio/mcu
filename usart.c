@@ -21,32 +21,32 @@ void uart_init(void) {
     uint32_t bauddiv;
 
     CMU_ClockEnable(cmuClock_GPIO, true);
-    CMU_ClockEnable(cmuClock_USART1, true);
-    GPIO_PinModeSet(gpioPortD, 1, gpioModeInput, 0);
+    CMU_ClockEnable(cmuClock_UART0, true);
+    GPIO_PinModeSet(gpioPortA, 4, gpioModeInput, 0);
 
     USART_InitAsync_TypeDef init = USART_INITASYNC_DEFAULT;
     init.oversampling = usartOVS16;
-    USART_InitAsync(USART1, &init);
+    USART_InitAsync(UART0, &init);
 
     bauddiv = (ClockGetPeripheralClockFrequency()*4)/(OVS*BAUD)-4;
-    USART1->CLKDIV = bauddiv<<_USART_CLKDIV_DIV_SHIFT;
-    USART1->ROUTE = USART_ROUTE_LOCATION_LOC1 | USART_ROUTE_RXPEN;
+    UART0->CLKDIV = bauddiv<<_UART_CLKDIV_DIV_SHIFT;
+    UART0->ROUTE = UART_ROUTE_LOCATION_LOC2 | UART_ROUTE_RXPEN;
 
     /* Setup the buffer that stores the incoming MIDI messages */
     circular_buffer_init(&circular_buffer);
 
-    USART_IntEnable(USART1, USART_IEN_RXDATAV);
-    NVIC_SetPriority(USART1_RX_IRQn, INTERRUPTLVL);
-    NVIC_ClearPendingIRQ(USART1_RX_IRQn);
-    NVIC_EnableIRQ(USART1_RX_IRQn);
+    USART_IntEnable(UART0, UART_IEN_RXDATAV);
+    NVIC_SetPriority(UART0_RX_IRQn, INTERRUPTLVL);
+    NVIC_ClearPendingIRQ(UART0_RX_IRQn);
+    NVIC_EnableIRQ(UART0_RX_IRQn);
 
 }
 
 
-void USART1_RX_IRQHandler(void) {
+void UART0_RX_IRQHandler(void) {
     uint8_t ch;
-    if(USART1->IF & (USART_IF_RXDATAV | USART_IF_RXFULL)) {
-        ch = USART1->RXDATA;
+    if(UART0->IF & (UART_IF_RXDATAV | UART_IF_RXFULL)) {
+        ch = UART0->RXDATA;
         circular_buffer_push(&circular_buffer, ch);
     }
 }
