@@ -31,6 +31,7 @@ bool queue_put(Queue *self, const void *buf, size_t len) {
     size_t len1 = self->capacity - tail;
 
     if (len > self->capacity - self->length) return false;
+    if (tail > self->capacity) tail -= self->capacity;
     if (len1 > len) len1 = len;
     memcpy((void *)&self->buf[tail], buf, len1);
     memcpy((void *)self->buf, buf + len1, len - len1);
