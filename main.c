@@ -33,11 +33,11 @@ char note_wavegens[128]; /* maps active MIDI notes to index of wavegen */
 SPIDRV_HandleData_t synth_spi;
 
 SPIDRV_Init_t synth_spi_init = {
-    .port = USART1,
-    .portLocationTx = USART_ROUTELOC0_TXLOC_LOC1,
-    .portLocationRx = USART_ROUTELOC0_RXLOC_LOC1,
-    .portLocationClk = USART_ROUTELOC0_CLKLOC_LOC1,
-    .portLocationCs = USART_ROUTELOC0_CSLOC_LOC1,
+    .port = USART0,
+    .portLocationTx = _USART_ROUTELOC0_TXLOC_LOC0,
+    .portLocationRx = _USART_ROUTELOC0_RXLOC_LOC0,
+    .portLocationClk = _USART_ROUTELOC0_CLKLOC_LOC0,
+    .portLocationCs = _USART_ROUTELOC0_CSLOC_LOC0,
     .bitRate = 1000000,
     .frameLength = 8,
     .type = spidrvMaster,
