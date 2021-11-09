@@ -59,7 +59,7 @@ Ecode_t ecode = ECODE_OK; /* for debugging */
 static void complete_synth_transfer(SPIDRV_Handle_t handle, Ecode_t status, int nbytes) {
     if (nbytes != sizeof(synth)) return;
     synth_clearcmds(&synth);
-    GPIO_PinOutSet(PORTE, 13);
+    GPIO_PinOutSet(gpioPortE, 13);
 }
 
 static void transfer_synth(void) {
@@ -121,7 +121,7 @@ static void note_off(char note, char velocity) {
 int main(void) {
     CHIP_Init();
     CMU_ClockEnable(cmuClock_GPIO, true);
-    GPIO_PinModeSet(PORTE, 13, gpioModePushPull, 1);
+    GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
     SPIDRV_Init(&synth_spi, &synth_spi_init);
 
     uart_init();
