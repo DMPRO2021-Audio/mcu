@@ -46,7 +46,6 @@ SPIDRV_Init_t synth_spi_init = {
     .portLocationTx = _USART_ROUTELOC0_TXLOC_LOC0,
     .portLocationRx = _USART_ROUTELOC0_RXLOC_LOC0,
     .portLocationClk = _USART_ROUTELOC0_CLKLOC_LOC0,
-    .portLocationCs = _USART_ROUTELOC0_CSLOC_LOC0,
     .bitRate = 1000000,
     .frameLength = 8,
     .type = spidrvMaster,
@@ -60,7 +59,7 @@ Ecode_t ecode = ECODE_OK; /* for debugging */
 static void complete_synth_transfer(SPIDRV_Handle_t handle, Ecode_t status, int nbytes) {
     if (nbytes != sizeof(synth)) return;
     synth_clearcmds(&synth);
-    //TODO: release chip select
+    GPIO_PinOutSet(PORTE, 13);
 }
 
 static void transfer_synth(void) {
@@ -68,7 +67,7 @@ static void transfer_synth(void) {
     if (ecode != ECODE_EMDRV_SPIDRV_OK && ecode != ECODE_EMDRV_SPIDRV_IDLE) {
         exit(1);
     }
-    // TODO: assert chip select (but don't release it after abort!)
+    GPIO_PinOutClear(PORTE, 13);
     ecode = SPIDRV_MTransmit(&synth_spi, (void *)&synth, sizeof(synth), complete_synth_transfer);
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
 }
@@ -122,6 +121,7 @@ static void note_off(char note, char velocity) {
 int main(void) {
     CHIP_Init();
     CMU_ClockEnable(cmuClock_GPIO, true);
+    GPIO_PinModeSet(PORTE, 13, gpioModePushPull, 1);
     SPIDRV_Init(&synth_spi, &synth_spi_init);
 
     uart_init();
