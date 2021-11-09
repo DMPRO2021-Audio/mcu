@@ -67,7 +67,7 @@ static void transfer_synth(void) {
     if (ecode != ECODE_EMDRV_SPIDRV_OK && ecode != ECODE_EMDRV_SPIDRV_IDLE) {
         exit(1);
     }
-    GPIO_PinOutClear(PORTE, 13);
+    GPIO_PinOutClear(gpioPortE, 13);
     ecode = SPIDRV_MTransmit(&synth_spi, (void *)&synth, sizeof(synth), complete_synth_transfer);
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
 }
@@ -95,7 +95,10 @@ static void note_on(char note, char velocity) {
     note_wavegens[note] = idx; /* TODO: what if note is already on? */
     w = &synth.wavegens[idx];
 //    w->freq = notes[note];
-    w->freq = 440;
+    w->freq = 7 * note;
+    w->velocity = 5000ul * velocity;
+    w->shape = WAVEGEN_SHAPE_PIANO;
+    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE;
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
 }
 
