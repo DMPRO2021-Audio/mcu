@@ -50,7 +50,7 @@ void handle_button(uint8_t pin)
         return;
     }
     int led = button_led_map[pin];
-    if (led_enabled[led]
+    if (led_enabled[led])
         GPIO_PinOutClear(LED_PORT, led);
     else
         GPIO_PinOutSet(LED_PORT, led);
