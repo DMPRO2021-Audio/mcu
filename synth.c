@@ -15,14 +15,10 @@ static void set_envelope(EnvelopeStep *dst, int dstlen, EnvelopeStep *src, int s
 }
 
 void wavegen_set_vol_envelope(WaveGen *self, EnvelopeStep *steps, int nsteps) {
-    set_envelope(self->vol_envelope, lenof(self->vol_envelope), steps, nsteps);
+    set_envelope(self->envelopes, lenof(self->envelopes), steps, nsteps);
 }
 
 void wavegen_clearcmds(WaveGen *self) {
-    self->cmds = 0;
-}
-
-void looper_clearcmds(Looper *self) {
     self->cmds = 0;
 }
 
@@ -30,5 +26,4 @@ void synth_clearcmds(Synth *self) {
     for (WaveGen *w = self->wavegens; w < endof(self->wavegens); w++) {
         wavegen_clearcmds(w);
     }
-    looper_clearcmds(&self->looper);
 }

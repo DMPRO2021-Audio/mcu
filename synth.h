@@ -7,7 +7,12 @@
 #define LVLU32(x) (LVL(x, 0, UINT32_MAX))
 #define LVLS32(x) (LVL(x, INT32_MIN, INT32_MAX))
 
-#define ENVELOPE_STEP(delta_lvl, delta_time) {LVLS32(delta_lvl) / (delta_time), (delta_time)}
+// #define ENVELOPE_STEP(delta_lvl, delta_time) {LVLS32(delta_lvl) / (delta_time), (delta_time)}
+
+#define FIXED_POINT 8
+// TODO: Might want to assert f < +/-2^23
+/* Float to Fixed Point */
+#define F2FP(f) (int32_t)(f * (1<<FIXED_POINT))
 
 #define SYNTH_WAVEGEN_COUNT 16
 #define WAVEGEN_ENVELOPE_LENGTH 8
@@ -30,49 +35,40 @@ enum {
 };
 
 typedef volatile struct PACKED {
-    int32_t rate;
-    uint32_t time;
+    uint8_t gain; /* Named gain. Note: Interpreted as fixed point in range [0, 2) */ // FIXME: Not very elegant
+    uint8_t duration; /* Shifted by 8: 1 = 256 samples, 255 = 65536 samples. */
 } EnvelopeStep;
 
 typedef volatile struct PACKED {
-    uint32_t freq;
-    uint32_t vol;
-    EnvelopeStep vol_envelope[WAVEGEN_ENVELOPE_LENGTH];
+    uint32_t freq /* FIXED POINT */;
+    uint32_t velocity /* FIXED POINT */;
+    EnvelopeStep envelopes[WAVEGEN_ENVELOPE_LENGTH];
     uint8_t shape;
     uint8_t cmds;
 } WaveGen;
 
-typedef volatile struct PACKED {
-    uint32_t delay;
-    uint32_t feedback;
-} Echo;
+// ! Not used
+// typedef volatile struct PACKED {
+//     uint32_t delay;
+//     uint32_t feedback;
+// } Echo;
 
 typedef volatile struct PACKED {
-    int32_t balance;
+    int32_t balance; /* Interpreted as in range [-1, 1] */
 } Pan;
 
 typedef volatile struct PACKED {
-    uint32_t playback_vol;
-    int8_t playback_speed;
-    uint8_t cmds;
-} Looper;
-
-typedef volatile struct PACKED {
-    uint32_t delay[4];
+    uint32_t tau[6];
+    uint32_t gain[7] /* FIXED_POINT */;
 } Reverb;
 
 typedef volatile struct PACKED {
     WaveGen wavegens[SYNTH_WAVEGEN_COUNT];
-    Echo echo;
-    Pan pan;
+    uint32_t master_volume; /* Named master_volume */
     Reverb reverb;
-    Looper looper;
-    uint32_t vol;
+    Pan pan;
 } Synth;
 
 void wavegen_set_vol_envelope(WaveGen *self, EnvelopeStep *steps, int nsteps);
 void wavegen_clearcmds(WaveGen *self);
-
-void looper_clearcmds(Looper *self);
-
 void synth_clearcmds(Synth *self);

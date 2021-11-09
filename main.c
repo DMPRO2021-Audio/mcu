@@ -15,11 +15,20 @@
 #include "usart.h"
 
 Synth synth = {
-    .wavegens = {
-        {.freq = F_SAMPLE / 261.63, .vol = 1.0}, /* C4 */
-        {.freq = F_SAMPLE / 392.00, .vol = 1.0}, /* G4 */
+    .master_volume = 1.0,
+    .pan = { .balance = 0, },
+    .reverb = {
+        .tau = {3003, 3403, 3905, 4495, 241, 83},
+        .gain = {
+            F2FP(0.895),
+            F2FP(0.883),
+            F2FP(0.867),
+            F2FP(0.853),
+            F2FP(0.7),
+            F2FP(0.7),
+            F2FP(0.7)
+        },
     },
-    .vol = 1.0
 };
 
 /* holds released wavegen indices */
@@ -67,8 +76,14 @@ static void transfer_synth(void) {
 static void note_on(char note, char velocity) {
     /* TODO: use velocity to adjust envelope? */
     static EnvelopeStep envelope[] = {
-        ENVELOPE_STEP(1.0, 0.2 * F_SAMPLE),
-        ENVELOPE_STEP(-0.2, 0.2 * F_SAMPLE),
+        { .gain = 0,   .duration = 5, },
+        { .gain = 255, .duration = 40, },
+        { .gain = 212, .duration = 60, },
+        { .gain = 176, .duration = 60, },
+        { .gain = 126, .duration = 60, },
+        { .gain = 64,  .duration = 60, },
+        { .gain = 64,  .duration = 30, },
+        { .gain = 64,   .duration = 0, },
     };
 
     char idx;
@@ -88,7 +103,10 @@ static void note_on(char note, char velocity) {
 static void note_off(char note, char velocity) {
     /* TODO: use velocity to adjust envelope? */
     static EnvelopeStep envelope[] = {
-        ENVELOPE_STEP(-1.0, 0.2 * F_SAMPLE),
+        { .gain = 64,   .duration = 60, },
+        { .gain = 32,   .duration = 60, },
+        { .gain = 16,   .duration = 60, },
+        { .gain =  0,   .duration = 60, },
     };
 
     char idx;
