@@ -8,7 +8,7 @@ OBJS = main.o synth.o usart.o queue.o circular_buffer.o
 #    sdk/platform/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.o\
 #    sdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/startup_efm32gg.o
 #MACHFLAGS = -mcpu=cortex-m3 -mthumb -specs=nano.specs
-#CFLAGS += -D EFM32GG990F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG/Include/ -g3
+#CFLAGS += -D EFM32GG990F1024 -I sdk/platform/Device/SiliconLabs/EFM32GG/Include/ -g3 -O0
 #LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG/Source/GCC/efm32gg.ld
 
 #### for EFM32GG12B810F1024 (Thunderboard and PCB) ####
@@ -17,7 +17,7 @@ OBJS += \
     sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/system_efm32gg12b.o\
     sdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/startup_efm32gg12b.o
 MACHFLAGS = -mcpu=cortex-m4 -mthumb -specs=nano.specs
-CFLAGS += -D EFM32GG12B810F1024GQ64 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/ -g3
+CFLAGS += -D EFM32GG12B810F1024GQ64 -I sdk/platform/Device/SiliconLabs/EFM32GG12B/Include/ -g3 -O0
 LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/efm32gg12b.ld
 
 #### choose one ####
