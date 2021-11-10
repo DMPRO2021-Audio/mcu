@@ -27,8 +27,7 @@ void uart_init(void) {
     init.oversampling = usartOVS16;
     USART_InitAsync(UART0, &init);
 
-    bauddiv = 9472;
-    UART0->CLKDIV = bauddiv<<_UART_CLKDIV_DIV_SHIFT;
+    UART0->CLKDIV = 9472;
     UART0->ROUTELOC0 = UART_ROUTELOC0_RXLOC_LOC2;
     UART0->ROUTEPEN = UART_ROUTEPEN_RXPEN;
 
