@@ -15,7 +15,7 @@
 #include "usart.h"
 
 Synth synth = {
-    .master_volume = 1.0,
+    .master_volume = F2FP(1.0),
     .pan = { .balance = 0, },
     .reverb = {
         .tau = {3003, 3403, 3905, 4495, 241, 83},
@@ -96,10 +96,12 @@ static void note_on(char note, char velocity) {
     w = &synth.wavegens[idx];
 //    w->freq = notes[note];
     w->freq = 7 * note;
-    w->velocity = 5000ul * velocity;
+//    w->velocity = 5000ul * velocity;
+    w->velocity = 500000ul;
+    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | 2;
     w->shape = WAVEGEN_SHAPE_PIANO;
-    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE;
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
+    GPIO_PinOutSet(gpioPortA, 0);
 }
 
 static void note_off(char note, char velocity) {
@@ -119,12 +121,14 @@ static void note_off(char note, char velocity) {
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
 
     if (!queue_put(&wavegen_queue, &idx, 1)) exit(1);
+    GPIO_PinOutClear(gpioPortA, 0);
 }
 
 int main(void) {
     CHIP_Init();
     CMU_ClockEnable(cmuClock_GPIO, true);
     GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
+    GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 0);
     SPIDRV_Init(&synth_spi, &synth_spi_init);
 
     uart_init();

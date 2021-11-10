@@ -14,7 +14,7 @@
 /* Float to Fixed Point */
 #define F2FP(f) (int32_t)(f * (1<<FIXED_POINT))
 
-#define SYNTH_WAVEGEN_COUNT 16
+#define SYNTH_WAVEGEN_COUNT 6
 #define WAVEGEN_ENVELOPE_LENGTH 8
 
 enum {
