@@ -36,17 +36,17 @@ int main(int argc, char const *argv[])
     GPIO_PinModeSet(gpioPortE, 3, gpioModePushPull, 0);
 
     SegmentLCD_Init(false);
-    // SegmentLCD_Write("Hello");
 
     // Create an arpeggiator for testing
     test_arpeggiator = init_arpeggiator(30, 0, 1, 1, 0.5);
-    add_held_key(&test_arpeggiator, NOTE_C4);
-    add_held_key(&test_arpeggiator, NOTE_E4);
-    add_held_key(&test_arpeggiator, NOTE_G4);
-    add_held_key(&test_arpeggiator, NOTE_B4);
+    // add_held_key(&test_arpeggiator, NOTE_C4);
+    // add_held_key(&test_arpeggiator, NOTE_E4);
+    // add_held_key(&test_arpeggiator, NOTE_G4);
+    // add_held_key(&test_arpeggiator, NOTE_B4);
 
     // Set up interrupts/timers
-    uint32_t note_timer_top = 1709;  // 1709 gives ~1 s period using 14 MHz oscillator with div_8 and timer with div_1024
+    float beats_per_second = test_arpeggiator.BPM / 60.0;
+    uint32_t note_timer_top = (uint32_t) (((CLOCK_FREQUENCY / CLOCK_PRESCALER) / TIMER_PRESCALER) / beats_per_second) / test_arpeggiator.notes_per_beat;
     uint32_t gate_timer_top = (uint32_t) note_timer_top * test_arpeggiator.gate_time;
     setup_timers(note_timer_top, gate_timer_top);
 
@@ -113,6 +113,8 @@ void TIMER0_IRQHandler(void)
     uint32_t current_note = play_current_note(&test_arpeggiator);
     SegmentLCD_LowerNumber(current_note);
 
+
+    /* A variety of changes for runtime testing */
     // if (counter == 5) {
     //     add_held_key(&test_arpeggiator, NOTE_D4);
     // }
