@@ -69,17 +69,6 @@ void set_timer_tops() {
     set_gate_timer_top(gate_timer_top);
 }
 
-void BTN0_IRQHandler(void)
-{
-    uint32_t notes_to_add[8] = {NOTE_C6, NOTE_D6, NOTE_E6, NOTE_F6, NOTE_G6, NOTE_A6, NOTE_B6, NOTE_C7};
-}
-
-void BTN1_IRQHandler(void)
-{
-    // Flip between 3 and 1 octaves
-
-}
-
 // Start playing note (send single-note synth struct to FPGA, with start instruction)
 // (If implemented, tick metronome)
 void TIMER0_IRQHandler(void)

@@ -1,7 +1,7 @@
 .POSIX:
 
 # OBJS = main.o synth.o
-OBJS = arp_test.o
+OBJS = arp_test.o timer.o arpeggiator.o
 
 include sdk.mk
 
