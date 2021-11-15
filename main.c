@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "util.h"
 #include "midi.h"
@@ -30,6 +31,14 @@ Synth synth = {
         },
     },
 };
+
+// Calculated using [math.ceil(256 * 440 * pow(2, (i-69)/12)) for i in range(128)]
+const uint32_t notes[128] = 
+{
+    2094, 2218, 2350, 2490, 2638, 2794, 2960, 3136, 3323, 3520, 3730, 3952, 4187, 4435, 4699, 4979, 5275, 5588, 5920, 6272, 6645, 7040, 7459, 7903, 8373, 8870, 9398, 9957, 10549, 11176, 11840, 12544, 13290, 14080, 14918, 15805, 16745, 17740, 18795, 19913, 21097, 22351, 23680, 25088, 26580, 28160, 29835, 31609, 33489, 35480, 37590, 39825, 42193, 44702, 47360, 50176, 53160, 56320, 59669, 63218, 66977, 70959, 75179, 79649, 84385, 89403, 94719, 100351, 106319, 112640, 119338, 126435, 133953, 141918, 150357, 159298, 168770, 178805, 189438, 200702, 212637, 225280, 238676, 252869, 267905, 283836, 300713, 318595, 337539, 357610, 378875, 401404, 425273, 450560, 477352, 505737, 535810, 567671, 601426, 637189, 675078, 715220, 757749, 802807, 850545, 901120, 954704, 1011474, 1071619, 1135341, 1202851, 1274377, 1350155, 1430439, 1515498, 1605614, 1701089, 1802240, 1909407, 2022947, 2143237, 2270681, 2405702, 2548753, 2700309, 2860878, 3030995, 3211227
+};
+
+Synth_tmp synth_tmp;
 
 /* holds released wavegen indices */
 Queue wavegen_queue = {
@@ -72,6 +81,8 @@ static void transfer_synth(void) {
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
 }
 
+
+char next_wavegen = 0;
 static void note_on(char note, char velocity) {
     /* TODO: use velocity to adjust envelope? */
     static EnvelopeStep envelope[] = {
@@ -82,24 +93,25 @@ static void note_on(char note, char velocity) {
         { .gain = 126, .duration = 60, },
         { .gain = 64,  .duration = 60, },
         { .gain = 64,  .duration = 30, },
-        { .gain = 64,   .duration = 0, },
+        { .gain = 0,   .duration = 0, },
     };
 
-    char idx;
+    next_wavegen = (next_wavegen + 1) % SYNTH_WAVEGEN_COUNT;
+    char idx = next_wavegen;
     WaveGen *w;
 
-    if (!queue_get(&wavegen_queue, &idx, 1)) {
-        return; /* no wavegens available */
-    }
+    //if (!queue_get(&wavegen_queue, &idx, 1)) {
+    //    return; /* no wavegens available */
+    //}
 
     note_wavegens[note] = idx; /* TODO: what if note is already on? */
     w = &synth.wavegens[idx];
-//    w->freq = notes[note];
-    w->freq = 7 * note;
-//    w->velocity = 5000ul * velocity;
-    w->velocity = 500000ul;
-    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | 2;
-    w->shape = WAVEGEN_SHAPE_PIANO;
+    w->freq = notes[note];
+
+    w->velocity = 5000ul * velocity;
+    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
+    w->shape = WAVEGEN_SHAPE_SAWTOOTH;
+    
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
     GPIO_PinOutSet(gpioPortA, 0);
 }
@@ -111,6 +123,10 @@ static void note_off(char note, char velocity) {
         { .gain = 32,   .duration = 60, },
         { .gain = 16,   .duration = 60, },
         { .gain =  0,   .duration = 60, },
+        { .gain =  0,   .duration = 60, },
+        { .gain =  0,   .duration = 60, },
+        { .gain =  0,   .duration = 60, },
+        { .gain =  0,   .duration = 60, },
     };
 
     char idx;
@@ -120,7 +136,10 @@ static void note_off(char note, char velocity) {
     w = &synth.wavegens[idx];
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
 
-    if (!queue_put(&wavegen_queue, &idx, 1)) exit(1);
+    w->velocity = 0;
+    w->cmds = 0;
+
+    //if (!queue_put(&wavegen_queue, &idx, 1)) exit(1);
     GPIO_PinOutClear(gpioPortA, 0);
 }
 
@@ -141,10 +160,13 @@ int main(void) {
             switch (byte & MIDI_COMMAND_MASK) {
             case MIDI_NOTE_ON:
                 {
+
                     char note = uart_next_valid_byte();
                     char velocity = uart_next_valid_byte();
 
                     note_on(note, velocity);
+                    transfer_synth();
+                    //synth.wavegens[next_wavegen].cmds = WAVEGEN_CMD_ENABLE; // TODO: Remove the reset bit after transfering the synth
                 }
                 break;
             case MIDI_NOTE_OFF:
@@ -153,10 +175,10 @@ int main(void) {
                     char velocity = uart_next_valid_byte();
 
                     note_off(note, velocity);
+                    transfer_synth();
                 }
                 break;
             }
-            transfer_synth();
         }
     }
 }
