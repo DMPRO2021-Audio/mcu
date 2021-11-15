@@ -19,7 +19,7 @@ void wavegen_set_vol_envelope(WaveGen *self, EnvelopeStep *steps, int nsteps) {
 }
 
 void wavegen_clearcmds(WaveGen *self) {
-    self->cmds = 0;
+    self->cmds = WAVEGEN_CMD_ENABLE;
 }
 
 void synth_clearcmds(Synth *self) {
