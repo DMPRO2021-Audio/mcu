@@ -15,6 +15,8 @@
 #include "synth.h"
 #include "usart.h"
 
+typedef void CommandHandler(char status);
+
 Synth synth = {
     .master_volume = F2FP(1.0),
     .pan = { .balance = 0, },
@@ -63,11 +65,14 @@ static void complete_synth_transfer(SPIDRV_Handle_t handle, Ecode_t status, int 
     GPIO_PinOutSet(gpioPortE, 13);
 }
 
-static void transfer_synth(void) {
+static void abort_synth_transfer(void) {
     ecode = SPIDRV_AbortTransfer(&synth_spi);
     if (ecode != ECODE_EMDRV_SPIDRV_OK && ecode != ECODE_EMDRV_SPIDRV_IDLE) {
         exit(1);
     }
+}
+
+static void start_synth_transfer(void) {
     GPIO_PinOutClear(gpioPortE, 13);
     ecode = SPIDRV_MTransmit(&synth_spi, (void *)&synth, sizeof(synth), complete_synth_transfer);
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
@@ -134,7 +139,43 @@ static void note_off(char note, char velocity) {
     GPIO_PinOutClear(gpioPortA, 0);
 }
 
+void handle_note_off(char status) {
+    char key = uart_next_valid_byte();
+    char velocity = uart_next_valid_byte();
+
+    note_off(key, velocity);
+}
+
+void handle_note_on(char status) {
+    char key = uart_next_valid_byte();
+    char velocity = uart_next_valid_byte();
+
+    note_on(key, velocity);
+}
+
+void handle_control_change(char status) {
+    char ctrl = uart_next_valid_byte();
+    char value = uart_next_valid_byte();
+
+    (void)ctrl, (void)value, warn(); // TODO
+}
+
+void handle_pitch_bend_change(char status) {
+    char lsb = uart_next_valid_byte();
+    char msb = uart_next_valid_byte();
+    short value = msb << 7 | lsb;
+
+    (void)value, warn(); // TODO
+}
+
 int main(void) {
+    static CommandHandler *const command_handlers[] = {
+        [MIDI_NOTE_OFF]          = handle_note_off,
+        [MIDI_NOTE_ON]           = handle_note_on,
+        [MIDI_CONTROL_CHANGE]    = handle_control_change,
+        [MIDI_PITCH_BEND_CHANGE] = handle_pitch_bend_change,
+    };
+
     CHIP_Init();
     CMU_ClockEnable(cmuClock_GPIO, true);
     GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
@@ -145,30 +186,22 @@ int main(void) {
 
     while (1) {
         uint8_t byte = uart_next_valid_byte();
+        int idx;
+        CommandHandler *handler;
 
-        if (byte & MIDI_STATUS_MASK) {
-            switch (byte & MIDI_COMMAND_MASK) {
-            case MIDI_NOTE_ON:
-                {
-
-                    char note = uart_next_valid_byte();
-                    char velocity = uart_next_valid_byte();
-
-                    note_on(note, velocity);
-                }
-                break;
-            case MIDI_NOTE_OFF:
-                {
-                    char note = uart_next_valid_byte();
-                    char velocity = uart_next_valid_byte();
-
-                    note_off(note, velocity);
-                }
-                break;
-            }
-
-            transfer_synth();
+        if (!(byte & MIDI_STATUS_MASK)) {
+            warn();
+            continue;
         }
+
+        idx = (byte & MIDI_COMMAND_MASK) >> MIDI_COMMAND_SHIFT;
+        if (idx > lenof(command_handlers)) continue;
+        handler = command_handlers[idx];
+        if (!handler) continue;
+
+        abort_synth_transfer();
+        handler(byte & ~MIDI_STATUS_MASK);
+        start_synth_transfer();
     }
 }
 
