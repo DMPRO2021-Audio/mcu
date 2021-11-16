@@ -16,6 +16,7 @@
 #include "usart.h"
 
 typedef void CommandHandler(char status);
+typedef void ControlHandler(char ctrl, char value);
 
 Synth synth = {
     .master_volume = F2FP(1.0),
@@ -41,6 +42,9 @@ Queue wavegen_queue = {
 };
 
 char note_wavegens[128]; /* maps active MIDI notes to index of wavegen */
+char wavegen_notes[SYNTH_WAVEGEN_COUNT];
+double pitch_bend = 1.0;
+char controls[128];
 
 SPIDRV_HandleData_t synth_spi;
 
@@ -85,12 +89,12 @@ static void note_on(char note, char velocity) {
     static EnvelopeStep envelope[] = {
         { .rate = 127,   .duration = 255, },
         { .rate = -30, .duration = 100, },
-        { .rate = -20, .duration = 255, },
         { .rate = -10, .duration = 255, },
+        { .rate = -7, .duration = 255, },
         { .rate = -5, .duration = 255, },
-        { .rate = -80,  .duration = 255, },
-        { .rate = -80,  .duration = 255, },
-        { .rate = -4,   .duration = 100, },
+        { .rate = -4,  .duration = 255, },
+        { .rate = -4,  .duration = 255, },
+        { .rate = -3,   .duration = 255, },
     };
 
     next_wavegen = (next_wavegen + 1) % SYNTH_WAVEGEN_COUNT;
@@ -102,9 +106,10 @@ static void note_on(char note, char velocity) {
     //}
 
     note_wavegens[note] = idx; /* TODO: what if note is already on? */
+    wavegen_notes[idx] = note;
 
     w = &synth.wavegens[idx];
-    w->freq = notes[note];
+    w->freq = notes[note] * pitch_bend;
     w->velocity = 50ul * velocity;
     w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
     w->shape = WAVEGEN_SHAPE_SQUARE;
@@ -132,40 +137,81 @@ static void note_off(char note, char velocity) {
     idx = note_wavegens[note]; /* TODO: what if note is already off? */
 
     w = &synth.wavegens[idx];
-    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
-    wavegen_set_vol_envelope(w, envelope, lenof(envelope));
+    w->cmds = WAVEGEN_CMD_ENABLE;
+    if (!controls[MIDI_CC_SUSTAIN_KEY]) {
+        wavegen_set_vol_envelope(w, envelope, lenof(envelope));
+    }
 
     //if (!queue_put(&wavegen_queue, &idx, 1)) exit(1);
     GPIO_PinOutClear(gpioPortA, 0);
 }
 
-void handle_note_off(char status) {
+static void reset_wavegens(void) {
+    static EnvelopeStep envelope[] = {
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+    };
+
+    for (WaveGen *w = synth.wavegens; w < endof(synth.wavegens); w++) {
+        w->velocity = 0;
+        w->cmds = WAVEGEN_CMD_RESET_ENVELOPE;
+        wavegen_set_vol_envelope(w, envelope, lenof(envelope));
+    }
+}
+
+static void handle_note_off(char status) {
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
     note_off(key, velocity);
 }
 
-void handle_note_on(char status) {
+static void handle_note_on(char status) {
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
     note_on(key, velocity);
 }
 
-void handle_control_change(char status) {
+static void handle_control_change(char status) {
     char ctrl = uart_next_valid_byte();
     char value = uart_next_valid_byte();
 
-    (void)ctrl, (void)value, warn(); // TODO
+    switch (ctrl) {
+    case MIDI_CC_ALL_SOUND_OFF:
+        reset_wavegens();
+        break;
+    case MIDI_CC_RESET_ALL_CONTROLLERS:
+        //reset_controllers();
+        break;
+    case MIDI_CC_ALL_NOTES_OFF:
+    case MIDI_CC_OMNI_MODE_OFF:
+    case MIDI_CC_OMNI_MODE_ON:
+    case MIDI_CC_MONO_MODE_ON:
+    case MIDI_CC_MONO_MODE_OFF:
+        //all_notes_off();
+        break;
+    default:
+        controls[ctrl] = value;
+    }
 }
 
-void handle_pitch_bend_change(char status) {
+static void handle_pitch_bend_change(char status) {
     char lsb = uart_next_valid_byte();
     char msb = uart_next_valid_byte();
-    short value = msb << 7 | lsb;
+    short value = (msb << 7) | lsb;
 
-    (void)value, warn(); // TODO
+    pitch_bend = 1.0 + (.059463 * ((value - 16384) / 8192.0));
+
+    for (int i = 0; i < SYNTH_WAVEGEN_COUNT; i++) {
+        synth.wavegens[i].freq = notes[wavegen_notes[i]] * pitch_bend;
+    }
 }
 
 int main(void) {
