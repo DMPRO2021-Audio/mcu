@@ -14,7 +14,7 @@
 /* Float to Fixed Point */
 #define F2FP(f) (int32_t)(f * (1<<FIXED_POINT))
 
-#define SYNTH_WAVEGEN_COUNT 8
+#define SYNTH_WAVEGEN_COUNT 32
 #define WAVEGEN_ENVELOPE_LENGTH 8
 
 enum {
@@ -36,7 +36,7 @@ enum {
 };
 
 typedef volatile struct PACKED {
-    uint8_t gain; /* Named gain. Note: Interpreted as fixed point in range [0, 2)*/ // FIXME: Not very elegant
+    int8_t rate; /* Named rate. Note: Interpreted as fixed point in range [0, 2)*/ // FIXME: Not very elegant
     uint8_t duration; /* Shifted by 8: 1 = 256 samples, 255 = 65536 samples. */
 } EnvelopeStep;
 

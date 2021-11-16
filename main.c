@@ -84,14 +84,14 @@ char next_wavegen = 0;
 static void note_on(char note, char velocity) {
     /* TODO: use velocity to adjust envelope? */
     static EnvelopeStep envelope[] = {
-        { .gain = 0,   .duration = 5, },
-        { .gain = 255, .duration = 40, },
-        { .gain = 212, .duration = 60, },
-        { .gain = 176, .duration = 60, },
-        { .gain = 126, .duration = 60, },
-        { .gain = 64,  .duration = 60, },
-        { .gain = 64,  .duration = 30, },
-        { .gain = 0,   .duration = 0, },
+        { .rate = 127,   .duration = 255, },
+        { .rate = -30, .duration = 100, },
+        { .rate = -20, .duration = 255, },
+        { .rate = -10, .duration = 255, },
+        { .rate = -5, .duration = 255, },
+        { .rate = -80,  .duration = 255, },
+        { .rate = -80,  .duration = 255, },
+        { .rate = -4,   .duration = 100, },
     };
 
     next_wavegen = (next_wavegen + 1) % SYNTH_WAVEGEN_COUNT;
@@ -106,9 +106,9 @@ static void note_on(char note, char velocity) {
 
     w = &synth.wavegens[idx];
     w->freq = notes[note];
-    w->velocity = 5000ul * velocity;
+    w->velocity = 50ul * velocity;
     w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
-    w->shape = WAVEGEN_SHAPE_SAWTOOTH;
+    w->shape = WAVEGEN_SHAPE_SQUARE;
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
 
     GPIO_PinOutSet(gpioPortA, 0);
@@ -117,14 +117,14 @@ static void note_on(char note, char velocity) {
 static void note_off(char note, char velocity) {
     /* TODO: use velocity to adjust envelope? */
     static EnvelopeStep envelope[] = {
-        { .gain = 64,   .duration = 60, },
-        { .gain = 32,   .duration = 60, },
-        { .gain = 16,   .duration = 60, },
-        { .gain =  0,   .duration = 60, },
-        { .gain =  0,   .duration = 60, },
-        { .gain =  0,   .duration = 60, },
-        { .gain =  0,   .duration = 60, },
-        { .gain =  0,   .duration = 60, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
+        { .rate = -30,   .duration = 255, },
     };
 
     char idx;
@@ -161,7 +161,6 @@ int main(void) {
                     char velocity = uart_next_valid_byte();
 
                     note_on(note, velocity);
-                    transfer_synth();
                 }
                 break;
             case MIDI_NOTE_OFF:
@@ -170,10 +169,11 @@ int main(void) {
                     char velocity = uart_next_valid_byte();
 
                     note_off(note, velocity);
-                    transfer_synth();
                 }
                 break;
             }
+
+            transfer_synth();
         }
     }
 }
