@@ -38,6 +38,9 @@ enum {
     MIDI_CC_OMNI_MODE_ON,
     MIDI_CC_MONO_MODE_ON,
     MIDI_CC_MONO_MODE_OFF,
+
+    /* custom messages */
+    MIDI_CC_SUSTAIN_KEY = 14,
 };
 
 extern const uint32_t notes[128]; /* maps midi note to frequency */
