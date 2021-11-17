@@ -33,6 +33,10 @@ SIMPLICITY_COMMANDER ?= commander
 
 CLEAN += program.bin program.elf $(OBJS)
 
+ifndef DEVKIT
+	DEVICE = --device EFM32GG12B810F1024GQ64
+endif
+
 program.bin: program.elf
 
 program.elf: $(OBJS) libspidrv.a libgpiointerrupt.a libdmadrv.a libemlib.a
@@ -47,8 +51,7 @@ clean:
 	-rm -f $(CLEAN)
 
 flash: program.bin
-	$(SIMPLICITY_COMMANDER) flash program.bin
-	$(SIMPLICITY_COMMANDER) flash --device EFM32GG12B810F1024GQ64 program.bin
+	$(SIMPLICITY_COMMANDER) flash $(DEVICE) program.bin
 
 .SUFFIXES: .bin .elf .c .o .a
 
