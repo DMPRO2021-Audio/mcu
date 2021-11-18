@@ -14,6 +14,7 @@
 #include "queue.h"
 #include "synth.h"
 #include "usart.h"
+#include "button.h"
 
 typedef void CommandHandler(char status);
 typedef void ControlHandler(char ctrl, char value);
@@ -84,6 +85,7 @@ static void start_synth_transfer(void) {
 
 
 char next_wavegen = 0;
+int current_shape = WAVEGEN_SHAPE_SAWTOOTH;
 static void note_on(char note, char velocity) {
     /* TODO: use velocity to adjust envelope? */
     static EnvelopeStep envelope[] = {
@@ -112,7 +114,7 @@ static void note_on(char note, char velocity) {
     w->freq = notes[note] * pitch_bend;
     w->velocity = 50ul * velocity;
     w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
-    w->shape = WAVEGEN_SHAPE_SQUARE;
+    w->shape = current_shape;
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
 
     GPIO_PinOutSet(gpioPortA, 0);
@@ -214,6 +216,22 @@ static void handle_pitch_bend_change(char status) {
     }
 }
 
+void handle_button(uint8_t pin)
+{
+    switch(pin) {
+    case BUTTON_SW1:
+        /* Change shape */
+        current_shape = (current_shape+1) % NUM_WAVEGEN_SHAPES;
+        break;
+    case BUTTON_SW2:
+    case BUTTON_SW3:
+    case BUTTON_SW4:
+    case BUTTON_SW5:
+    default:
+        break;
+    }
+}
+
 int main(void) {
     static CommandHandler *const command_handlers[] = {
         [MIDI_NOTE_OFF]          = handle_note_off,
@@ -226,6 +244,9 @@ int main(void) {
     CMU_ClockEnable(cmuClock_GPIO, true);
     GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
     SPIDRV_Init(&synth_spi, &synth_spi_init);
+
+    GPIOINT_Init();
+    button_init();
 
     uart_init();
     __enable_irq();
