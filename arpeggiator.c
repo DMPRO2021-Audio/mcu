@@ -16,8 +16,9 @@
 
 bool is_ascending = true;
 
-/* Due to difficulties linking libm, we make our own exponentiation function.
-   This is needed for calculating the frequencies for notes in an arbitrary number of octaves.*/
+/* NOTE: Defunct, as we are now using notes rather than frequencies.
+   Due to difficulties linking libm, we make our own exponentiation function.
+   This is needed for calculating the frequencies for notes in an arbitrary number of octaves. */
 uint8_t power(uint8_t base, uint8_t exponent) {
 	uint8_t out_value = 1;
 	for (uint8_t i = 0; i < exponent; i++)
@@ -29,37 +30,37 @@ uint8_t power(uint8_t base, uint8_t exponent) {
 }
 
 /* Shifts current_note_index forwards if notes which warrant such a shift are added to the loop.
-   For instance: When the arpeggiator is set to ascending, and a note which has a lower frequency
+   For instance: When the arpeggiator is set to ascending, and a note which has a lower MIDI note value
    than the current note is added, current_note_index should be shifted forwards in order to point
    to the same note that it did prior to adding the new note.
    
    After calling this method, the update_loop() method must also be called before
    arpeggiator is ready for playback. */
-void add_to_loop(Arpeggiator *self, uint32_t freq) {
-	uint32_t current_note = self->arp_loop[self->current_note_index];
+void add_to_loop(Arpeggiator *self, char note) {
+	char current_note = self->arp_loop[self->current_note_index];
 
 	switch (self->playback_order)
 	{
 	// Ascending
 	case 0:
-		if (freq <= current_note && current_note != 0) {
+		if (note <= current_note && current_note != 0) {
 			self->current_note_index++;
 		}
 		break;
 	
 	// Descending
 	case 1:
-		if (freq >= current_note && current_note != 0) {
+		if (note >= current_note && current_note != 0) {
 			self->current_note_index++;
 		}
 		break;
 	
 	// Up and down
 	case 2:
-		if (is_ascending && freq <= current_note && current_note != 0) {
+		if (is_ascending && note <= current_note && current_note != 0) {
 			self->current_note_index++;
 		}
-		else if (!is_ascending && freq >= current_note && current_note != 0) {
+		else if (!is_ascending && note >= current_note && current_note != 0) {
 			self->current_note_index++;
 		}
 		else {
@@ -85,21 +86,21 @@ void add_to_loop(Arpeggiator *self, uint32_t freq) {
    
    After calling this method, the update_loop() method must also be called before
    arpeggiator is ready for playback. */
-void remove_from_loop(Arpeggiator *self, uint32_t freq) {
-	uint32_t current_note = self->arp_loop[self->current_note_index];
+void remove_from_loop(Arpeggiator *self, char note) {
+	char current_note = self->arp_loop[self->current_note_index];
 
 	switch (self->playback_order)
 	{
 	// Ascending
 	case 0:
-		if (freq < current_note) {
+		if (note < current_note) {
 			self->current_note_index--;
 		}
 		break;
 	
 	// Descending
 	case 1:
-		if (freq > current_note) {
+		if (note > current_note) {
 			self->current_note_index--;
 		}
 		break;
@@ -107,12 +108,12 @@ void remove_from_loop(Arpeggiator *self, uint32_t freq) {
 	// Up and down
 	case 2:
 		if (is_ascending) {
-			if (freq < current_note) {
+			if (note < current_note) {
 				self->current_note_index--;
 			}
 		}
 		else {
-			if (freq > current_note) {
+			if (note > current_note) {
 				self->current_note_index--;
 			}
 		}
@@ -134,14 +135,14 @@ void remove_from_loop(Arpeggiator *self, uint32_t freq) {
 
 /* Comparison functions for use in library function qsort(). */
 int cmpfunc_smaller (const void * a, const void * b) {
-   return ( *(uint32_t*)a - *(uint32_t*)b );
+   return ( *(int*)a - *(int*)b );
 }
 int cmpfunc_larger (const void * a, const void * b) {
-   return ( *(uint32_t*)b - *(uint32_t*)a );
+   return ( *(int*)b - *(int*)a );
 }
 
 /* Recreates the entire loop, based on held keys, number of octaves and note order setting.
-   Currently the only function which actually adds frequencies to the loop. */
+   Currently the only function which actually adds notes to the loop. */
 void update_loop(Arpeggiator *self) {
 	// Zero the entire arp_loop
 	for (uint16_t i = 0; i < lenof(self->arp_loop); i++)
@@ -149,16 +150,16 @@ void update_loop(Arpeggiator *self) {
 		self->arp_loop[i] = 0;
 	}
 
-	uint8_t num_freqs = self->num_held_keys * self->num_octaves;
+	uint8_t num_notes = self->num_held_keys * self->num_octaves;
 
-	// Create an array of _all_ of the frequencies to be added to the loop, including potential octaves
-	uint32_t arp_freqs[num_freqs];
+	// Create an array of _all_ of the MIDI note values to be added to the loop, including potential octaves
+	char arp_notes[num_notes];
 	uint8_t loop_counter = 0;
 	for (uint8_t i = 0; i < self->num_held_keys; i++)
 	{
 		for (uint8_t j = 0; j < self->num_octaves; j++)
 		{
-			arp_freqs[loop_counter] = self->held_key_freqs[i] * power(2, j);
+			arp_notes[loop_counter] = self->held_key_notes[i] + j*12;
 			loop_counter++;
 		}
 	}
@@ -168,60 +169,59 @@ void update_loop(Arpeggiator *self) {
 	{
 	// Ascending
 	case 0:
-		self->loop_length = num_freqs;
+		self->loop_length = num_notes;
 
-		qsort(arp_freqs, num_freqs, sizeof(uint32_t), cmpfunc_smaller);
+		qsort(arp_notes, num_notes, sizeof(char), cmpfunc_smaller);
 
-		for (uint8_t i = 0; i < num_freqs; i++)
+		for (uint8_t i = 0; i < num_notes; i++)
 		{
-			self->arp_loop[i] = arp_freqs[i];
+			self->arp_loop[i] = arp_notes[i];
 		}
 		break;
 	
 	// Descending
 	case 1:
-		self->loop_length = num_freqs;
+		self->loop_length = num_notes;
 
-		qsort(arp_freqs, num_freqs, sizeof(uint32_t), cmpfunc_larger);
+		qsort(arp_notes, num_notes, sizeof(char), cmpfunc_larger);
 
-		for (uint8_t i = 0; i < num_freqs; i++)
+		for (uint8_t i = 0; i < num_notes; i++)
 		{
-			self->arp_loop[i] = arp_freqs[i];
+			self->arp_loop[i] = arp_notes[i];
 		}
 		break;
 	
 	// Up and down
 	case 2:
-		self->loop_length = num_freqs * 2;
+		self->loop_length = num_notes * 2;
 
-		qsort(arp_freqs, num_freqs, sizeof(uint32_t), cmpfunc_smaller);
+		qsort(arp_notes, num_notes, sizeof(char), cmpfunc_smaller);
 
-		for (uint8_t i = 0; i < num_freqs; i++)
+		for (uint8_t i = 0; i < num_notes; i++)
 		{
-			self->arp_loop[i] = arp_freqs[i];
+			self->arp_loop[i] = arp_notes[i];
 		}
-		for (uint8_t i = 0; i < num_freqs; i++)
+		for (uint8_t i = 0; i < num_notes; i++)
 		{
-			self->arp_loop[num_freqs+i] = arp_freqs[num_freqs-1-i];
+			self->arp_loop[num_notes+i] = arp_notes[num_notes-1-i];
 		}
 		break;
 	// Key press order
 	case 3:
-		self->loop_length = num_freqs;
-
-		for (uint8_t i = 0; i < num_freqs; i++)
+		self->loop_length = num_notes;
+		for (uint8_t i = 0; i < num_notes; i++)
 		{
-			self->arp_loop[i] = arp_freqs[i];
+			self->arp_loop[i] = arp_notes[i];
 		}
 
 		break;
 	
 	// Random
 	case 9:
-		self->loop_length = num_freqs;
-		for (uint8_t i = 0; i < num_freqs; i++)
+		self->loop_length = num_notes;
+		for (uint8_t i = 0; i < num_notes; i++)
 		{
-			self->arp_loop[i] = arp_freqs[i];
+			self->arp_loop[i] = arp_notes[i];
 		}
 		
 		break;
@@ -236,11 +236,11 @@ void update_loop(Arpeggiator *self) {
 }
 
 /* Adds a new key to the array and updates the arpeggiator loop, preserving position in the loop. */
-void add_held_key(Arpeggiator *self, uint32_t freq) {
-	for (uint8_t i = 0; i < lenof(self->held_key_freqs); i++)
+void add_held_key(Arpeggiator *self, char note) {
+	for (uint8_t i = 0; i < lenof(self->held_key_notes); i++)
 	{
-		if (self->held_key_freqs[i]==0) {
-			self->held_key_freqs[i] = freq;
+		if (self->held_key_notes[i]==0) {
+			self->held_key_notes[i] = note;
 			self->num_held_keys++;
 			break;
 		}
@@ -248,42 +248,42 @@ void add_held_key(Arpeggiator *self, uint32_t freq) {
 
 	for (uint8_t i = 0; i < self->num_octaves; i++)
 	{
-		add_to_loop(self, freq * power(2, i));
+		add_to_loop(self, note + i*12);
 	}
 
 	update_loop(self);
 }
 
 /* The converse of add_held_key(). */
-void remove_held_key(Arpeggiator *self, uint32_t freq) {
+void remove_held_key(Arpeggiator *self, char note) {
 	bool shift_remainder = false;
-	for (uint8_t i = 0; i < lenof(self->held_key_freqs); i++)
+	for (uint8_t i = 0; i < lenof(self->held_key_notes); i++)
 	{
-		if (self->held_key_freqs[i] == freq) {
+		if (self->held_key_notes[i] == note) {
 			shift_remainder = true;
 			self->num_held_keys--;
 		}
 		if (shift_remainder) {
 			// Move all remaining elements one step up
-			if (i != lenof(self->held_key_freqs)-1) {
-				self->held_key_freqs[i] = self->held_key_freqs[i+1];
+			if (i != lenof(self->held_key_notes)-1) {
+				self->held_key_notes[i] = self->held_key_notes[i+1];
 			}
 			// Set the final element to 0
 			else {
-				self->held_key_freqs[i] = 0;
+				self->held_key_notes[i] = 0;
 			}
 		}
 	}
 
 	for (uint8_t i = 0; i < self->num_octaves; i++)
 	{
-		remove_from_loop(self, freq * power(2, i));
+		remove_from_loop(self, note + i*12);
 	}
 
 	update_loop(self);
 }
 
-/* Completely resets the loop, based on arpeggiator settings and held_key_freqs.
+/* Completely resets the loop, based on arpeggiator settings and held_key_notes.
    Should be run after changing playback_order or num_octaves. */
 void init_loop(Arpeggiator *self) {
 	self->current_note_index = 0;
@@ -346,19 +346,19 @@ Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uin
 	return new_arpeggiator;
 }
 
-/* Returns the frequency of the note that should be played, and shifts the
+/* Returns the MIDI note value of the note that should be played, and shifts the
    index forwards to point at the next note in the loop. */
-uint32_t play_current_note(Arpeggiator *self) {
+char play_current_note(Arpeggiator *self) {
 	if (self->playback_order == 9) {
 		self->current_note_index = (uint8_t) rand() % self->loop_length;
 	}
 
-	uint32_t current_note = self->arp_loop[self->current_note_index];
+	char current_note = self->arp_loop[self->current_note_index];
 
 	self->current_note_index = (self->current_note_index+1) % self->loop_length;  // Increment index by one, or loop around if finished
 
 	// Special case for note_order == 2 (up-and-down).
-	// Keeps track of whether we are currently ascending or descending through the frequencies.
+	// Keeps track of whether we are currently ascending or descending through the notes.
 	// Necessary for dynamically and seamlessly adding held keys to the loop.
 	if (self->playback_order == 2 && is_ascending && self->current_note_index >= (self->loop_length) / 2) {
 		is_ascending = false;

@@ -18,8 +18,9 @@ Arpeggiator arpeggiator;
 uint16_t counter = 0;
 
 uint8_t old_notes_per_beat = 1;
+uint16_t old_BPM = 100;
 
-uint32_t current_note;
+char current_note;
 
 void run_arpeggiator(void) {
     // GPIO setup
@@ -46,8 +47,7 @@ void run_arpeggiator(void) {
                     char note = uart_next_valid_byte();
                     char velocity = uart_next_valid_byte();  // Should not be used in arpeggiator
 
-                    uint32_t freq;  // TODO: convert note to freq
-                    add_held_key(&arpeggiator, freq);
+                    add_held_key(&arpeggiator, note);
                 }
                 break;
             case MIDI_NOTE_OFF:
@@ -55,8 +55,7 @@ void run_arpeggiator(void) {
                     char note = uart_next_valid_byte();
                     char velocity = uart_next_valid_byte();  // Should not be used in arpeggiator
 
-                    uint32_t freq;  // TODO: convert note to freq
-                    remove_held_key(note, freq);
+                    remove_held_key(&arpeggiator, note);
                 }
                 break;
             }
@@ -79,10 +78,11 @@ void set_timer_tops() {
 void TIMER0_IRQHandler(void)
 {
     // If notes_per_beat has changed
-    if (arpeggiator.notes_per_beat != old_notes_per_beat) {
+    if (arpeggiator.notes_per_beat != old_notes_per_beat || arpeggiator.BPM != old_BPM) {
         set_timer_tops();
 
         old_notes_per_beat = arpeggiator.notes_per_beat;
+        old_BPM = arpeggiator.BPM;
     }
 
     // Handles the metronome (currently LED1 toggling)
@@ -96,10 +96,9 @@ void TIMER0_IRQHandler(void)
         GPIO_PinOutToggle(D6_PORT, D6_PIN);
     }
 
-    uint32_t current_note = play_current_note(&arpeggiator);
+    current_note = play_current_note(&arpeggiator);
 
-    char note;  // TODO: convert frequency to note OR store note
-    note_on(note, 128);
+    note_on(current_note, 128);
     transfer_synth();
 
     counter++;
@@ -114,7 +113,7 @@ void TIMER0_IRQHandler(void)
 void TIMER1_IRQHandler(void)
 {
     char note;  // TODO: convert frequency to note OR store note
-    note_off(note, 0);
+    note_off(current_note, 0);
     transfer_synth();
 
     stop_gate_timer();
