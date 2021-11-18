@@ -6,11 +6,6 @@
 
 #include "timer.h"
 
-// TODO: Automate using emlib
-#define CLOCK_FREQUENCY 19000000
-#define CLOCK_PRESCALER 8
-#define TIMER_PRESCALER 1024
-
 #define HFPER_CLOCK_PRESCALE cmuClkDiv_8
 #define NOTE_TIMER_PRESCALE timerPrescale1024
 #define GATE_TIMER_PRESCALE timerPrescale1024

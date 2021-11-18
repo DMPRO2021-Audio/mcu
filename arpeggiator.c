@@ -1,14 +1,15 @@
 #include <stdint.h>
-#include <stdio.h>
+// #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <em_device.h>
-#include <em_chip.h>
-#include <em_cmu.h>
-#include <em_emu.h>
-#include <em_gpio.h>
-#include <em_timer.h>
-#include <gpiointerrupt.h>
+// #include <string.h>
+#include <stdbool.h>
+// #include <em_device.h>
+// #include <em_chip.h>
+// #include <em_cmu.h>
+// #include <em_emu.h>
+// #include <em_gpio.h>
+// #include <em_timer.h>
+// #include <gpiointerrupt.h>
 
 #include "arpeggiator.h"
 #include "util.h"
@@ -16,7 +17,7 @@
 
 bool is_ascending = true;
 
-/* NOTE: Defunct, as we are now using notes rather than frequencies.
+/* NOTE: Defunct, as we are now using MIDI note values rather than frequencies.
    Due to difficulties linking libm, we make our own exponentiation function.
    This is needed for calculating the frequencies for notes in an arbitrary number of octaves. */
 uint8_t power(uint8_t base, uint8_t exponent) {
@@ -349,9 +350,9 @@ Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uin
 /* Returns the MIDI note value of the note that should be played, and shifts the
    index forwards to point at the next note in the loop. */
 char play_current_note(Arpeggiator *self) {
-	if (self->playback_order == 9) {
-		self->current_note_index = (uint8_t) rand() % self->loop_length;
-	}
+	// if (self->playback_order == 9) {
+	// 	self->current_note_index = (uint8_t) rand() % self->loop_length;
+	// }
 
 	char current_note = self->arp_loop[self->current_note_index];
 

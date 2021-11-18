@@ -1,12 +1,11 @@
 #include <stdint.h>
-#include <em_timer.h>
 
 #define ARP_KEYS_MAX 50
 #define ARP_LOOP_MAX 150
 
 typedef volatile struct {
     // uint32_t held_key_freqs[ARP_KEYS_MAX];  // Defunct, replaced by held_key_notes
-    char held_key_notes[ARP_KEYS_MAX];  // Because the rest of the synth uses MIDI notes rather than frequencies
+    char held_key_notes[ARP_KEYS_MAX];  // Holds the MIDI note values of all held keys
     uint8_t num_held_keys;
     char arp_loop[ARP_LOOP_MAX];
     uint8_t loop_length;
