@@ -14,6 +14,7 @@
 #include "queue.h"
 #include "synth.h"
 #include "usart.h"
+#include "buttons.h"
 
 typedef void CommandHandler(char status);
 typedef void ControlHandler(char ctrl, char value);
@@ -228,6 +229,7 @@ int main(void) {
     SPIDRV_Init(&synth_spi, &synth_spi_init);
 
     uart_init();
+    button_init();
     __enable_irq();
 
     while (1) {
