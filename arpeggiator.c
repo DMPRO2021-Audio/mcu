@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <math.h>
 #include <em_device.h>
 #include <em_chip.h>
 #include <em_cmu.h>
@@ -10,7 +9,6 @@
 #include <em_gpio.h>
 #include <em_timer.h>
 #include <gpiointerrupt.h>
-#include <segmentlcd.h>
 
 #include "arpeggiator.h"
 #include "util.h"
@@ -233,7 +231,6 @@ void update_loop(Arpeggiator *self) {
 	}
 
 	if (self->dynamic_NPB_switching == true) {
-		SegmentLCD_Battery(4);
 		self->notes_per_beat = self->loop_length;
 	}
 }
@@ -296,12 +293,22 @@ void init_loop(Arpeggiator *self) {
 
 /* BPM setter function */
 void set_BPM(Arpeggiator *self, uint16_t new_BPM) {
-	self->BPM = new_BPM;
+	if (new_BPM >= 1) {
+		self->BPM = new_BPM;
+	}
+	else {
+		self->BPM = new_BPM;
+	}
 }
 
 /* notes_per_beat setter function */
 void set_notes_per_beat(Arpeggiator *self, uint8_t new_notes_per_beat) {
-	self->notes_per_beat = new_notes_per_beat;
+	if (new_notes_per_beat >= 1) {
+		self->notes_per_beat = new_notes_per_beat;
+	}
+	else {
+		self->notes_per_beat = 1;
+	}
 }
 
 /* Set a new playback order setting for the loop.
