@@ -23,8 +23,11 @@
 Arpeggiator arpeggiator;
 uint16_t counter = 0;
 
-uint8_t old_notes_per_beat = 1;
-uint16_t old_BPM = 100;
+#define START_BPM 100
+#define START_NPB 4
+
+uint16_t old_BPM = START_BPM;
+uint8_t old_notes_per_beat = START_NPB;
 
 char current_note;
 
@@ -275,7 +278,7 @@ void setup_arpeggiator() {
     GPIO_PinModeSet(D6_PORT, D6_PIN, gpioModePushPull, 0);  // TODO: Do this wherever the rest of the LEDs are set up
 
     // Initialise the arpeggiator itself
-    arpeggiator = init_arpeggiator(100, 0, 1, 1, 0.5);
+    arpeggiator = init_arpeggiator(START_BPM, 0, 1, START_NPB, 0.5);
 
     // Set up interrupts/timers
     float beats_per_second = arpeggiator.BPM / 60.0;
@@ -397,7 +400,7 @@ void TIMER1_IRQHandler(void)
 
     abort_synth_transfer();
     // NB: Assumes current_note has not changed since last TIMER0 interrupt.
-    // Might not always hold!
+    // Will not hold if gate_time is e.g. greater than 1
     note_off(current_note, 0);
     start_synth_transfer();
 
