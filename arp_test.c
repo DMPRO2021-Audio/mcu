@@ -38,7 +38,7 @@ int main(int argc, char const *argv[])
     SegmentLCD_Init(false);
 
     // Create an arpeggiator for testing
-    test_arpeggiator = init_arpeggiator(30, 0, 1, 1, 0.5);
+    test_arpeggiator = init_arpeggiator(60, 0, 1, 1, 0.5);
     // add_held_key(&test_arpeggiator, NOTE_C4);
     // add_held_key(&test_arpeggiator, NOTE_E4);
     // add_held_key(&test_arpeggiator, NOTE_G4);
@@ -104,25 +104,31 @@ void TIMER0_IRQHandler(void)
 
 
     /* A variety of changes for runtime testing */
-    // if (counter == 5) {
-    //     add_held_key(&test_arpeggiator, NOTE_D4);
-    // }
-    // if (counter == 10) {
-    //     remove_held_key(&test_arpeggiator, NOTE_E4);
-    // }
-    // if (counter == 7) {
-    //     add_held_key(&test_arpeggiator, NOTE_F2);
-    // }
+    if (counter == 5) {
+        add_held_key(&test_arpeggiator, NOTE_D4);
+    }
+    if (counter == 10) {
+        remove_held_key(&test_arpeggiator, NOTE_D4);
+        remove_held_key(&test_arpeggiator, NOTE_F2);
+    }
+    if (counter == 7) {
+        add_held_key(&test_arpeggiator, NOTE_F2);
+    }
+    if (counter == 12) {
+        add_held_key(&test_arpeggiator, NOTE_A5);
+        add_held_key(&test_arpeggiator, NOTE_B5);
+        add_held_key(&test_arpeggiator, NOTE_E2);
+    }
     // if (counter == 15) {
     //     change_num_octaves(&test_arpeggiator, 3);
     // }
     // if (counter == 12) {
     //     change_playback_order(&test_arpeggiator, 2);
     // }
-    if (counter == 6) {
-        test_arpeggiator.dynamic_NPB_switching = true;
-        test_arpeggiator.notes_per_beat = test_arpeggiator.loop_length;
-    }
+    // if (counter == 6) {
+    //     test_arpeggiator.dynamic_NPB_switching = true;
+    //     test_arpeggiator.notes_per_beat = test_arpeggiator.loop_length;
+    // }
     // if (counter == 16) {
     //     remove_held_key(&test_arpeggiator, NOTE_F2);
     // }
