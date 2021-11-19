@@ -356,7 +356,8 @@ char play_current_note(Arpeggiator *self) {
 
 	char current_note = self->arp_loop[self->current_note_index];
 
-	self->current_note_index = (self->current_note_index+1) % self->loop_length;  // Increment index by one, or loop around if finished
+	// Increment index by one, or loop around if at end of loop
+	self->current_note_index = (self->loop_length == 0) ? 0 : (self->current_note_index+1) % self->loop_length;
 
 	// Special case for note_order == 2 (up-and-down).
 	// Keeps track of whether we are currently ascending or descending through the notes.
