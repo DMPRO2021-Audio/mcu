@@ -288,7 +288,7 @@ void setup_arpeggiator() {
 }
 
 int main(void) {
-    // setup_arpeggiator();
+    setup_arpeggiator();
 
     static CommandHandler *const command_handlers[] = {
         [MIDI_NOTE_OFF]          = handle_note_off,
@@ -325,7 +325,7 @@ int main(void) {
         if (arpeggiator_on) {
             char note = uart_next_valid_byte();
             char velocity = uart_next_valid_byte();
-            if (idx == 0) {
+            if (idx == 0) {  // Ask if 
                 add_held_key(&arpeggiator, note);
                 continue;
             }
@@ -371,7 +371,7 @@ void TIMER0_IRQHandler(void)
     }
 
     // Handles the metronome (currently LED1 toggling)
-    // Sort of a hack; this may cause a jump in the metronome.
+    // Sort of a hack; this will usually cause a jump in the metronome whenever dynamic_NPB_switching is toggled
     if (arpeggiator.dynamic_NPB_switching) {
         if (arpeggiator.current_note_index == 0) {
             GPIO_PinOutToggle(D6_PORT, D6_PIN);
