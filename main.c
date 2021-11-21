@@ -23,11 +23,16 @@
 Arpeggiator arpeggiator;
 uint16_t counter = 0;
 
-#define START_BPM 100
+#define START_BPM 120
 #define START_NPB 4
+#define START_GATE_TIME 0.5
+#define START_NOTE_ORDER 0
+#define START_NUM_OCTAVES 1
+#define START_DYNAMIC_NPB_SWITCHING false
 
 uint16_t old_BPM = START_BPM;
 uint8_t old_notes_per_beat = START_NPB;
+float old_gate_time = START_GATE_TIME;
 
 char current_note;
 
@@ -62,7 +67,7 @@ Synth synth = {
             F2FP(0.853),
             F2FP(0.7),
             F2FP(0.7),
-            F2FP(0.7)
+            F2FP(0.0)
         },
     },
 };
@@ -260,10 +265,12 @@ void handle_button(uint8_t pin) {
         /* Toggle arpeggiator */
         if (!arpeggiator_on) {
             arpeggiator_on = true;
+            GPIO_PinOutSet(gpioPortA, 1);
             start_arpeggiator();
         }
         else {
             arpeggiator_on = false;
+            GPIO_PinOutClear(gpioPortA, 1);
             stop_arpeggiator();
         }
         break;
@@ -275,21 +282,27 @@ void handle_button(uint8_t pin) {
 
 void setup_arpeggiator() {
     // GPIO setup
-    GPIO_PinModeSet(D6_PORT, D6_PIN, gpioModePushPull, 0);  // TODO: Do this wherever the rest of the LEDs are set up
+    GPIO_PinModeSet(gpioPortA, 3, gpioModePushPull, 0);  // TODO: Do this wherever the rest of the LEDs are set up
+
+    // Temporary, for debugging
+    // GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 0);
+    GPIO_PinModeSet(gpioPortA, 1, gpioModePushPull, 0);
+    GPIO_PinModeSet(gpioPortA, 2, gpioModePushPull, 0);
 
     // Initialise the arpeggiator itself
-    arpeggiator = init_arpeggiator(START_BPM, 0, 1, START_NPB, 0.5);
+    arpeggiator = init_arpeggiator(START_BPM, START_NOTE_ORDER, START_NUM_OCTAVES, START_NPB, START_GATE_TIME, START_DYNAMIC_NPB_SWITCHING);
 
     // Set up interrupts/timers
     float beats_per_second = arpeggiator.BPM / 60.0;
     uint32_t note_timer_top = (uint32_t) (((CLOCK_FREQUENCY / CLOCK_PRESCALER) / TIMER_PRESCALER) / beats_per_second) / arpeggiator.notes_per_beat;
     uint32_t gate_timer_top = (uint32_t) note_timer_top * arpeggiator.gate_time;
+
     setup_timers(note_timer_top, gate_timer_top);
+
+    // GPIO_PinOutSet(D6_PORT, D6_PIN);
 }
 
 int main(void) {
-    setup_arpeggiator();
-
     static CommandHandler *const command_handlers[] = {
         [MIDI_NOTE_OFF]          = handle_note_off,
         [MIDI_NOTE_ON]           = handle_note_on,
@@ -308,6 +321,10 @@ int main(void) {
     uart_init();
     __enable_irq();
 
+    setup_arpeggiator();
+
+    GPIO_PinOutToggle(D6_PORT, D6_PIN);
+
     while (1) {
         uint8_t byte = uart_next_valid_byte();
         int idx;
@@ -322,19 +339,19 @@ int main(void) {
         if (idx > lenof(command_handlers)) continue;
 
         /* Hijacks loop if arpeggiator is on, and a key is pressed or released */
-        if (arpeggiator_on) {
+        if (arpeggiator_on && (idx == 0 || idx == 1)) {
             char note = uart_next_valid_byte();
-            char velocity = uart_next_valid_byte();
-            if (idx == 0) {  // Ask if 
+            char velocity = uart_next_valid_byte();  // Remains unused in arpeggiator
+            if (idx == MIDI_NOTE_ON) {
                 add_held_key(&arpeggiator, note);
                 continue;
             }
-            if (idx == 1) {
+            if (idx == MIDI_NOTE_OFF) {
                 remove_held_key(&arpeggiator, note);
                 continue;
             }
         }
-        /* -------------------------------------------- */
+        /* ------------------------------------------------------------------- */
 
         handler = command_handlers[idx];
         if (!handler) continue;
@@ -362,12 +379,13 @@ void TIMER0_IRQHandler(void)
     // Clear flag for TIMER0 OF interrupt
     TIMER_IntClear(TIMER0, TIMER_IF_OF);
 
-    // If notes_per_beat or BPM has changed
-    if (arpeggiator.notes_per_beat != old_notes_per_beat || arpeggiator.BPM != old_BPM) {
+    // If notes_per_beat, BPM or gate_time has changed
+    if (arpeggiator.notes_per_beat != old_notes_per_beat || arpeggiator.BPM != old_BPM || arpeggiator.gate_time != old_gate_time) {
         set_timer_tops();
 
         old_notes_per_beat = arpeggiator.notes_per_beat;
         old_BPM = arpeggiator.BPM;
+        old_gate_time = arpeggiator.gate_time;
     }
 
     // Handles the metronome (currently LED1 toggling)
@@ -382,6 +400,10 @@ void TIMER0_IRQHandler(void)
     }
 
     current_note = play_current_note(&arpeggiator);
+
+    if (arpeggiator.loop_length == 0) {
+        return;
+    }
 
     abort_synth_transfer();
     note_on(current_note, 128);

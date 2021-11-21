@@ -3,17 +3,18 @@
 #include <em_cmu.h>
 #include <em_timer.h>
 #include <em_core.h>
+#include <em_gpio.h>
 
 #include "timer.h"
 
-#define HFPER_CLOCK_PRESCALE cmuClkDiv_8
+#define HFPER_CLOCK_PRESCALE cmuClkDiv_1
 #define NOTE_TIMER_PRESCALE timerPrescale1024
 #define GATE_TIMER_PRESCALE timerPrescale1024
 
 void setup_timers(uint16_t note_timer_top, uint16_t gate_timer_top)
 {
-	// Prescale the HFPERCLK 
-	CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_8);
+	// // Prescale the HFPERCLK
+	// CMU_ClockDivSet(cmuClock_HFPER, HFPER_CLOCK_PRESCALE);
 
 	/* ----- Timer setup ----- */
 	// Enable clock for timer0 and timer1
@@ -45,6 +46,10 @@ void setup_timers(uint16_t note_timer_top, uint16_t gate_timer_top)
 	// Enable overflow interrupt
 	TIMER_IntEnable(TIMER0, TIMER_IF_OF);
 	TIMER_IntEnable(TIMER1, TIMER_IF_OF);
+
+	// Set priority
+	NVIC_SetPriority(TIMER0_IRQn, 1);
+	NVIC_SetPriority(TIMER1_IRQn, 2);  // Does this even work?
 }
 
 
@@ -52,7 +57,6 @@ void start_note_timer()
 {
 	// Start the timer
 	TIMER_Enable(TIMER0, true);
-	NVIC_SetPriority(TIMER0_IRQn, 1);
 }
 
 void stop_note_timer()
@@ -79,7 +83,7 @@ void stop_gate_timer()
 }
 
 
-// Sets the top of the timer; should be executed whenever BPM is changed
+// Sets the top of the timer; should be executed whenever BPM or notes_per_beat is changed
 void set_note_timer_top(uint16_t timer_top)
 {
     TIMER_TopSet(TIMER0, timer_top);

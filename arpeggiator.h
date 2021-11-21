@@ -13,7 +13,7 @@ typedef volatile struct {
 
     uint16_t BPM;
     uint8_t notes_per_beat;
-    uint8_t playback_order;  // 0: ascending, 1: descending, 2: up-and-down, 3: key-press-order, 9: random
+    uint8_t playback_order;  // 0: ascending, 1: descending, 2: up-and-down, 3: key-press-order, 4: random (NOT IMPLEMENTED)
     uint8_t num_octaves;
 
     float gate_time;  // Number between 0 and 1 exclusive -- percentage of time between consecutive notes a note should be played for
@@ -26,9 +26,9 @@ void remove_held_key(Arpeggiator *self, char freq);
 
 void set_BPM(Arpeggiator *self, uint16_t new_BPM);
 void set_notes_per_beat(Arpeggiator *self, uint8_t new_notes_per_beat);
-void change_playback_order(Arpeggiator *self, uint8_t playback_order);
-void change_num_octaves(Arpeggiator *self, uint8_t num_octaves);
+void set_playback_order(Arpeggiator *self, uint8_t playback_order);
+void set_num_octaves(Arpeggiator *self, uint8_t num_octaves);
 
-Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time);
+Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time, bool init_dynamic_NPB_switching);
 
 char play_current_note(Arpeggiator *self);

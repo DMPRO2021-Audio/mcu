@@ -7,7 +7,7 @@
 // #include <em_chip.h>
 // #include <em_cmu.h>
 // #include <em_emu.h>
-// #include <em_gpio.h>
+#include <em_gpio.h>
 // #include <em_timer.h>
 // #include <gpiointerrupt.h>
 
@@ -74,12 +74,16 @@ void add_to_loop(Arpeggiator *self, char note) {
 		break;
 	
 	// Random
-	case 9:
+	case 4:
 		// Do nothing
 		break;
 
 	default:
 		exit(1);  // Potential room for error handling
+	}
+
+	if (self->current_note_index <= 0 || self->current_note_index >= self->loop_length) {
+		self->current_note_index = 0;
 	}
 }
 
@@ -125,21 +129,25 @@ void remove_from_loop(Arpeggiator *self, char note) {
 		break;
 	
 	// Random
-	case 9:
+	case 4:
 		// Do nothing
 		break;
 
 	default:
 		exit(1);  // Potential room for error handling
 	}
+
+	if (self->current_note_index <= 0 || self->current_note_index >= self->loop_length) {
+		self->current_note_index = 0;
+	}
 }
 
 /* Comparison functions for use in library function qsort(). */
 int cmpfunc_smaller (const void * a, const void * b) {
-   return ( *(int*)a - *(int*)b );
+   return ( *(char*)a - *(char*)b );
 }
 int cmpfunc_larger (const void * a, const void * b) {
-   return ( *(int*)b - *(int*)a );
+   return ( *(char*)b - *(char*)a );
 }
 
 /* Recreates the entire loop, based on held keys, number of octaves and note order setting.
@@ -218,7 +226,7 @@ void update_loop(Arpeggiator *self) {
 		break;
 	
 	// Random
-	case 9:
+	case 4:
 		self->loop_length = num_notes;
 		for (uint8_t i = 0; i < num_notes; i++)
 		{
@@ -232,7 +240,7 @@ void update_loop(Arpeggiator *self) {
 	}
 
 	if (self->dynamic_NPB_switching == true) {
-		self->notes_per_beat = self->loop_length;
+		self->notes_per_beat = self->num_held_keys;
 	}
 }
 
@@ -312,26 +320,47 @@ void set_notes_per_beat(Arpeggiator *self, uint8_t new_notes_per_beat) {
 	}
 }
 
+/* gate_time setter function */
+void set_gate_time(Arpeggiator *self, float new_gate_time) {
+	if (new_gate_time < 0.1) {
+		new_gate_time = 0.1;
+	}
+	else if (new_gate_time > 0.9) {
+		new_gate_time = 0.9;
+	}
+	self->gate_time = new_gate_time;
+
+}
+
 /* Set a new playback order setting for the loop.
    0 = ascending
    1 = descending
    2 = up-and-down
    3 = key-press-order
-   9 = random */
-void change_playback_order(Arpeggiator *self, uint8_t playback_order) {
-	self->playback_order = playback_order;
+   4 = random */
+void set_playback_order(Arpeggiator *self, uint8_t new_playback_order) {
+	if (new_playback_order >= 4) {  // Because random is not implemented, we limit this to between 0 and 3
+		new_playback_order = 3;
+	}
+	self->playback_order = new_playback_order;
 	init_loop(self);
 }
 
 /* Set how many octaves above the held keys should also be added to the loop.
    If num_octaves == 1, only the held keys themselves are included in the loop.*/
-void change_num_octaves(Arpeggiator *self, uint8_t num_octaves) {
-	self->num_octaves = num_octaves;
+void set_num_octaves(Arpeggiator *self, uint8_t new_num_octaves) {
+	if (new_num_octaves < 1) {
+		new_num_octaves = 1;
+	}
+	else if (new_num_octaves > 4) {
+		new_num_octaves = 4;
+	}
+	self->num_octaves = new_num_octaves;
 	init_loop(self);
 }
 
-/* Generetes a new arpeggiator with default settings. */
-Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time) {
+/* Generates a new arpeggiator with default settings. */
+Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time, bool init_dynamic_NPB_switching) {
 	Arpeggiator new_arpeggiator = {
 		.num_held_keys = 0,
 		.loop_length = 0,
@@ -341,7 +370,9 @@ Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uin
 		.BPM = init_BPM,
 		.playback_order = init_playback_order,
 		.num_octaves = init_num_octaves,
-		.gate_time = init_gate_time
+		.gate_time = init_gate_time,
+
+		.dynamic_NPB_switching = init_dynamic_NPB_switching
 	};
 
 	return new_arpeggiator;
@@ -350,7 +381,7 @@ Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uin
 /* Returns the MIDI note value of the note that should be played, and shifts the
    index forwards to point at the next note in the loop. */
 char play_current_note(Arpeggiator *self) {
-	// if (self->playback_order == 9) {
+	// if (self->playback_order == 4) {
 	// 	self->current_note_index = (uint8_t) rand() % self->loop_length;
 	// }
 
