@@ -241,7 +241,7 @@ void update_loop(Arpeggiator *self) {
 	}
 
 	if (self->dynamic_NPB_switching == true) {
-		self->notes_per_beat = self->num_held_keys;
+		set_notes_per_beat(self, self->num_held_keys);
 	}
 }
 
