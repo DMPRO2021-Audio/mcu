@@ -4,6 +4,7 @@
 #include <em_emu.h>
 #include <em_gpio.h>
 #include <em_timer.h>
+#include <math.h>
 #include <spidrv.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -12,8 +13,9 @@
 
 #include "util.h"
 #include "midi.h"
-#include "queue.h"
 #include "synth.h"
+#include "sound.h"
+#include "channel.h"
 #include "usart.h"
 #include "button.h"
 #include "arpeggiator.h"
@@ -44,7 +46,6 @@ void stop_arpeggiator() {
 /* For arpeggiator */
 
 typedef void CommandHandler(char status);
-typedef void ControlHandler(char ctrl, char value);
 
 Synth synth = {
     .master_volume = F2FP(1.0),
@@ -58,21 +59,12 @@ Synth synth = {
             F2FP(0.853),
             F2FP(0.7),
             F2FP(0.7),
-            F2FP(0.5)
+            F2FP(0)
         },
     },
 };
 
-/* holds released wavegen indices */
-Queue wavegen_queue = {
-    .capacity = SYNTH_WAVEGEN_COUNT,
-    .buf = {0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, /* TODO */
-};
-
-char note_wavegens[128]; /* maps active MIDI notes to index of wavegen */
-char wavegen_notes[SYNTH_WAVEGEN_COUNT];
-double pitch_bend = 1.0;
-char controls[128];
+Channel channels[16];
 
 SPIDRV_HandleData_t synth_spi;
 
@@ -95,6 +87,7 @@ static void complete_synth_transfer(SPIDRV_Handle_t handle, Ecode_t status, int 
     if (nbytes != sizeof(synth)) return;
     synth_clearcmds(&synth);
     GPIO_PinOutSet(gpioPortE, 13);
+    GPIO_PinOutClear(gpioPortA, 0);
 }
 
 static void abort_synth_transfer(void) {
@@ -105,147 +98,90 @@ static void abort_synth_transfer(void) {
 }
 
 static void start_synth_transfer(void) {
+    GPIO_PinOutSet(gpioPortA, 0);
     GPIO_PinOutClear(gpioPortE, 13);
     ecode = SPIDRV_MTransmit(&synth_spi, (void *)&synth, sizeof(synth), complete_synth_transfer);
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
 }
 
-
-char next_wavegen = 0;
-int current_shape = WAVEGEN_SHAPE_SAWTOOTH;
-static void note_on(char note, char velocity) {
-    /* TODO: use velocity to adjust envelope? */
-    static EnvelopeStep envelope[] = {
-        { .rate = 127,   .duration = 255, },
-        { .rate = -30, .duration = 100, },
-        { .rate = -10, .duration = 255, },
-        { .rate = -7, .duration = 255, },
-        { .rate = -5, .duration = 255, },
-        { .rate = -4,  .duration = 255, },
-        { .rate = -4,  .duration = 255, },
-        { .rate = -3,   .duration = 255, },
-    };
-
-    next_wavegen = (next_wavegen + 1) % (SYNTH_WAVEGEN_COUNT-1);
-    char idx = next_wavegen;
-    WaveGen *w;
-
-    //if (!queue_get(&wavegen_queue, &idx, 1)) {
-    //    return; /* no wavegens available */
-    //}
-
-    note_wavegens[(size_t) note] = idx; /* TODO: what if note is already on? */
-    wavegen_notes[(size_t) idx] = note;
-
-    w = &synth.wavegens[(size_t) idx];
-    w->freq = notes[(size_t) note] * pitch_bend;
-    w->velocity = 50ul * velocity;
-    w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
-    w->shape = current_shape;
-    wavegen_set_vol_envelope(w, envelope, lenof(envelope));
-}
-
-static void note_off(char note, char velocity) {
-    /* TODO: use velocity to adjust envelope? */
-    static EnvelopeStep envelope[] = {
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-    };
-
-    char idx;
-    WaveGen *w;
-
-    idx = note_wavegens[(size_t) note]; /* TODO: what if note is already off? */
-
-    w = &synth.wavegens[(size_t) idx];
-    w->cmds = WAVEGEN_CMD_ENABLE;
-    if (!controls[MIDI_CC_SUSTAIN_KEY]) {
-        wavegen_set_vol_envelope(w, envelope, lenof(envelope));
-    }
-
-    //if (!queue_put(&wavegen_queue, &idx, 1)) exit(1);
-}
-
-static void reset_wavegens(void) {
-    static EnvelopeStep envelope[] = {
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-        { .rate = -30,   .duration = 255, },
-    };
-
-    for (WaveGen *w = synth.wavegens; w < endof(synth.wavegens); w++) {
-        w->velocity = 0;
-        w->cmds = WAVEGEN_CMD_RESET_ENVELOPE;
-        wavegen_set_vol_envelope(w, envelope, lenof(envelope));
-    }
-}
-
 static void handle_note_off(char status) {
+    Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
-    note_off(key, velocity);
+    if (arpeggiator_on) {
+        remove_held_key(&arpeggiator, key);
+    } else {
+        channel_note_off(c, key, velocity / 127.0);
+    }
 }
 
 static void handle_note_on(char status) {
+    Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
-    note_on(key, velocity);
+    if (arpeggiator_on) {
+        add_held_key(&arpeggiator, key);
+    } else {
+        channel_note_on(c, key, velocity / 127.0);
+    }
 }
 
 static void handle_control_change(char status) {
+    Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char ctrl = uart_next_valid_byte();
     char value = uart_next_valid_byte();
 
     switch (ctrl) {
-    case MIDI_CC_ALL_SOUND_OFF:
-        reset_wavegens();
+    case MIDI_CC_MODULATION_WHEEL:
+    case MIDI_CC_VOLUME:
+        c->gain = value / 127.0;
         break;
+    case MIDI_CC_SUSTAIN_KEY:
+    case MIDI_CC_SUSTAIN_PEDAL:
+        c->sustain = value;
+        break;
+    case MIDI_CC_ALL_SOUND_OFF:
+        channel_all_notes_off(c, true);
+        return;
     case MIDI_CC_RESET_ALL_CONTROLLERS:
-        //reset_controllers();
+        c->gain = 0.5;
+        c->pitch_bend = 0.0;
+        c->sustain = false;
         break;
     case MIDI_CC_ALL_NOTES_OFF:
     case MIDI_CC_OMNI_MODE_OFF:
     case MIDI_CC_OMNI_MODE_ON:
     case MIDI_CC_MONO_MODE_ON:
     case MIDI_CC_MONO_MODE_OFF:
-        //all_notes_off();
-        break;
-    default:
-        controls[(size_t) ctrl] = value;
+        channel_all_notes_off(c, false);
+        return;
     }
+    channel_update_wavegens(c);
+}
+
+static void handle_program_change(char status) {
+    Channel *c = &channels[status & MIDI_CHANNEL_MASK];
+    char program = uart_next_valid_byte();
+
+    if (program >= num_programs) return;
+    c->program = &programs[(int)program];
+    channel_update_wavegens(c);
 }
 
 static void handle_pitch_bend_change(char status) {
+    Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char lsb = uart_next_valid_byte();
     char msb = uart_next_valid_byte();
-    short value = (msb << 7) | lsb;
 
-    pitch_bend = 1.0 + (.059463 * ((value - 16384) / 8192.0));
-
-    for (int i = 0; i < SYNTH_WAVEGEN_COUNT; i++) {
-        synth.wavegens[i].freq = notes[(size_t) wavegen_notes[i]] * pitch_bend;
-    }
+    c->pitch_bend = (((msb << 7) | lsb) - 0x2000) / (float)0x2000;
+    channel_update_wavegens(c);
 }
 
 void handle_button(uint8_t pin) {
     switch(pin) {
     case BUTTON_SW1:
-        /* Change shape */
-        current_shape = (current_shape+1) % NUM_WAVEGEN_SHAPES;
-        break;
     case BUTTON_SW2:
     case BUTTON_SW3:
     case BUTTON_SW4:
@@ -275,25 +211,32 @@ int main(void) {
         [MIDI_NOTE_OFF]          = handle_note_off,
         [MIDI_NOTE_ON]           = handle_note_on,
         [MIDI_CONTROL_CHANGE]    = handle_control_change,
+        [MIDI_PROGRAM_CHANGE]    = handle_program_change,
         [MIDI_PITCH_BEND_CHANGE] = handle_pitch_bend_change,
     };
+
+    for (int i = 0; i < num_programs && i < lenof(channels); i++) {
+        Channel *c = &channels[i];
+
+        c->program = &programs[i];
+        c->gain = 0.5;
+    }
 
     CHIP_Init();
     CMU_ClockEnable(cmuClock_GPIO, true);
     GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
+    GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 1);
     SPIDRV_Init(&synth_spi, &synth_spi_init);
-
     GPIOINT_Init();
     button_init();
 
+    reset_channels();
     uart_init();
     __enable_irq();
 
     led_init();
 
     arpeggiator = setup_arpeggiator();
-
-    // GPIO_PinOutToggle(LED_PORT, LED3);
 
     while (1) {
         uint8_t byte = uart_next_valid_byte();
@@ -306,25 +249,8 @@ int main(void) {
         }
 
         idx = (byte & MIDI_COMMAND_MASK) >> MIDI_COMMAND_SHIFT;
-        if (idx > lenof(command_handlers)) continue;
-
-        /* Hijacks loop if arpeggiator is on, and a key is pressed or released */
-        if (arpeggiator_on && (idx == MIDI_NOTE_OFF || idx == MIDI_NOTE_ON)) {
-            char note = uart_next_valid_byte();
-            // char velocity = uart_next_valid_byte();  // Remains unused in arpeggiator
-            (void) uart_next_valid_byte();
-            if (idx == MIDI_NOTE_ON) {
-                add_held_key(&arpeggiator, note);
-                continue;
-            }
-            if (idx == MIDI_NOTE_OFF) {
-                remove_held_key(&arpeggiator, note);
-                continue;
-            }
-        }
-        /* ------------------------------------------------------------------- */
-
-        handler = command_handlers[(size_t) idx];
+        if (idx >= lenof(command_handlers)) continue;
+        handler = command_handlers[(int)idx];
         if (!handler) continue;
 
         abort_synth_transfer();
@@ -367,7 +293,7 @@ void TIMER0_IRQHandler(void)
     }
 
     abort_synth_transfer();
-    note_on(current_note, 128);
+    channel_note_on(&channels[0], current_note, 1.0);
     start_synth_transfer();
 
     counter++;
@@ -384,7 +310,7 @@ void TIMER1_IRQHandler(void)
     abort_synth_transfer();
     // NB: Assumes current_note has not changed since last TIMER0 interrupt.
     // Will not hold if gate_time is e.g. greater than 1
-    note_off(current_note, 0);
+    channel_note_off(&channels[0], current_note, 0);
     start_synth_transfer();
 
     stop_gate_timer();

@@ -1,6 +1,16 @@
 .POSIX:
 
-OBJS = main.o synth.o usart.o queue.o circular_buffer.o midi.o button.o timer.o arpeggiator.o leds.o
+OBJS = \
+    main.o\
+    synth.o\
+    usart.o\
+    circular_buffer.o\
+    button.o\
+    timer.o\
+    arpeggiator.o\
+    leds.o\
+    sound.o\
+    channel.o
 
 #### for EFM32GG990F1024 (Giant Gecko dev kit) ####
 
@@ -41,7 +51,7 @@ endif
 program.bin: program.elf
 
 program.elf: $(OBJS) libspidrv.a libgpiointerrupt.a libdmadrv.a libemlib.a
-	$(CC) $(LDFLAGS) -o '$@' $(OBJS) -L . -l spidrv -l gpiointerrupt -l dmadrv -l emlib
+	$(CC) $(LDFLAGS) -o '$@' $(OBJS) -lm -L . -l spidrv -l gpiointerrupt -l dmadrv -l emlib
 
 -include $(OBJS:%.o=deps/%.d)
 

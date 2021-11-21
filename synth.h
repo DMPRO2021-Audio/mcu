@@ -44,10 +44,10 @@ typedef volatile struct PACKED {
 typedef volatile struct PACKED {
     uint32_t freq /* FIXED POINT */;
     uint32_t velocity /* FIXED POINT */;
-    EnvelopeStep envelopes[WAVEGEN_ENVELOPE_LENGTH];
+    EnvelopeStep envelope[WAVEGEN_ENVELOPE_LENGTH];
     uint8_t shape;
     uint8_t cmds;
-} WaveGen;
+} Wavegen;
 
 // ! Not used
 // typedef volatile struct PACKED {
@@ -65,12 +65,12 @@ typedef volatile struct PACKED {
 } Reverb;
 
 typedef volatile struct PACKED {
-    WaveGen wavegens[SYNTH_WAVEGEN_COUNT];
+    Wavegen wavegens[SYNTH_WAVEGEN_COUNT];
     uint32_t master_volume; /* Named master_volume */
     Reverb reverb;
     Pan pan;
 } Synth;
 
-void wavegen_set_vol_envelope(WaveGen *self, EnvelopeStep *steps, int nsteps);
-void wavegen_clearcmds(WaveGen *self);
+void wavegen_set_vol_envelope(Wavegen *self, const EnvelopeStep *steps);
+void wavegen_clearcmds(Wavegen *self);
 void synth_clearcmds(Synth *self);
