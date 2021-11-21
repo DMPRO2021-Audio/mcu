@@ -7,7 +7,7 @@
 // #include <em_chip.h>
 // #include <em_cmu.h>
 // #include <em_emu.h>
-#include <em_gpio.h>
+// #include <em_gpio.h>
 // #include <em_timer.h>
 // #include <gpiointerrupt.h>
 
@@ -302,22 +302,21 @@ void init_loop(Arpeggiator *self) {
 
 /* BPM setter function */
 void set_BPM(Arpeggiator *self, uint16_t new_BPM) {
-	if (new_BPM >= 1) {
-		self->BPM = new_BPM;
+	if (new_BPM < 30) {
+		new_BPM = 30;
 	}
-	else {
-		self->BPM = new_BPM;
+	else if (new_BPM > 300) {
+		new_BPM = 300;
 	}
+	self->BPM = new_BPM;
 }
 
 /* notes_per_beat setter function */
 void set_notes_per_beat(Arpeggiator *self, uint8_t new_notes_per_beat) {
-	if (new_notes_per_beat >= 1) {
-		self->notes_per_beat = new_notes_per_beat;
+	if (new_notes_per_beat < 1) {
+		new_notes_per_beat = 1;
 	}
-	else {
-		self->notes_per_beat = 1;
-	}
+	self->notes_per_beat = new_notes_per_beat;
 }
 
 /* gate_time setter function */
