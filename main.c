@@ -134,11 +134,11 @@ static void note_on(char note, char velocity) {
     //    return; /* no wavegens available */
     //}
 
-    note_wavegens[note] = idx; /* TODO: what if note is already on? */
-    wavegen_notes[idx] = note;
+    note_wavegens[(size_t) note] = idx; /* TODO: what if note is already on? */
+    wavegen_notes[(size_t) idx] = note;
 
-    w = &synth.wavegens[idx];
-    w->freq = notes[note] * pitch_bend;
+    w = &synth.wavegens[(size_t) idx];
+    w->freq = notes[(size_t) note] * pitch_bend;
     w->velocity = 50ul * velocity;
     w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
     w->shape = current_shape;
@@ -161,9 +161,9 @@ static void note_off(char note, char velocity) {
     char idx;
     WaveGen *w;
 
-    idx = note_wavegens[note]; /* TODO: what if note is already off? */
+    idx = note_wavegens[(size_t) note]; /* TODO: what if note is already off? */
 
-    w = &synth.wavegens[idx];
+    w = &synth.wavegens[(size_t) idx];
     w->cmds = WAVEGEN_CMD_ENABLE;
     if (!controls[MIDI_CC_SUSTAIN_KEY]) {
         wavegen_set_vol_envelope(w, envelope, lenof(envelope));
@@ -224,7 +224,7 @@ static void handle_control_change(char status) {
         //all_notes_off();
         break;
     default:
-        controls[ctrl] = value;
+        controls[(size_t) ctrl] = value;
     }
 }
 
@@ -236,7 +236,7 @@ static void handle_pitch_bend_change(char status) {
     pitch_bend = 1.0 + (.059463 * ((value - 16384) / 8192.0));
 
     for (int i = 0; i < SYNTH_WAVEGEN_COUNT; i++) {
-        synth.wavegens[i].freq = notes[wavegen_notes[i]] * pitch_bend;
+        synth.wavegens[i].freq = notes[(size_t) wavegen_notes[i]] * pitch_bend;
     }
 }
 
@@ -311,7 +311,8 @@ int main(void) {
         /* Hijacks loop if arpeggiator is on, and a key is pressed or released */
         if (arpeggiator_on && (idx == MIDI_NOTE_OFF || idx == MIDI_NOTE_ON)) {
             char note = uart_next_valid_byte();
-            char velocity = uart_next_valid_byte();  // Remains unused in arpeggiator
+            // char velocity = uart_next_valid_byte();  // Remains unused in arpeggiator
+            (void) uart_next_valid_byte();
             if (idx == MIDI_NOTE_ON) {
                 add_held_key(&arpeggiator, note);
                 continue;
@@ -323,7 +324,7 @@ int main(void) {
         }
         /* ------------------------------------------------------------------- */
 
-        handler = command_handlers[idx];
+        handler = command_handlers[(size_t) idx];
         if (!handler) continue;
 
         abort_synth_transfer();

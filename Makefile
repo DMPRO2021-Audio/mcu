@@ -22,6 +22,7 @@ LDFLAGS += -Tsdk/platform/Device/SiliconLabs/EFM32GG12B/Source/GCC/efm32gg12b.ld
 
 #### choose one ####
 
+CFLAGS += -Wall -pedantic
 CFLAGS += $(MACHFLAGS) -I config/ -g
 LDFLAGS += $(MACHFLAGS) -L sdk/platform/CMSIS/Lib/
 ARFLAGS += -U
