@@ -23,13 +23,6 @@
 Arpeggiator arpeggiator;
 uint16_t counter = 0;
 
-#define START_BPM 120
-#define START_NPB 4
-#define START_GATE_TIME 0.5
-#define START_NOTE_ORDER 0
-#define START_NUM_OCTAVES 1
-#define START_DYNAMIC_NPB_SWITCHING false
-
 uint16_t old_BPM = START_BPM;
 uint8_t old_notes_per_beat = START_NPB;
 float old_gate_time = START_GATE_TIME;
@@ -37,6 +30,7 @@ float old_gate_time = START_GATE_TIME;
 char current_note;
 
 bool arpeggiator_on = false;
+/* For arpeggiator */
 
 // LEDs D3--D6: Port A, Pins 0--3
 #define D6_PORT gpioPortA
@@ -67,7 +61,7 @@ Synth synth = {
             F2FP(0.853),
             F2FP(0.7),
             F2FP(0.7),
-            F2FP(0.0)
+            F2FP(0.5)
         },
     },
 };
@@ -135,7 +129,7 @@ static void note_on(char note, char velocity) {
         { .rate = -3,   .duration = 255, },
     };
 
-    next_wavegen = (next_wavegen + 1) % SYNTH_WAVEGEN_COUNT;
+    next_wavegen = (next_wavegen + 1) % (SYNTH_WAVEGEN_COUNT-1);
     char idx = next_wavegen;
     WaveGen *w;
 
@@ -280,28 +274,6 @@ void handle_button(uint8_t pin) {
     }
 }
 
-void setup_arpeggiator() {
-    // GPIO setup
-    GPIO_PinModeSet(gpioPortA, 3, gpioModePushPull, 0);  // TODO: Do this wherever the rest of the LEDs are set up
-
-    // Temporary, for debugging
-    // GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 0);
-    GPIO_PinModeSet(gpioPortA, 1, gpioModePushPull, 0);
-    GPIO_PinModeSet(gpioPortA, 2, gpioModePushPull, 0);
-
-    // Initialise the arpeggiator itself
-    arpeggiator = init_arpeggiator(START_BPM, START_NOTE_ORDER, START_NUM_OCTAVES, START_NPB, START_GATE_TIME, START_DYNAMIC_NPB_SWITCHING);
-
-    // Set up interrupts/timers
-    float beats_per_second = arpeggiator.BPM / 60.0;
-    uint32_t note_timer_top = (uint32_t) (((CLOCK_FREQUENCY / CLOCK_PRESCALER) / TIMER_PRESCALER) / beats_per_second) / arpeggiator.notes_per_beat;
-    uint32_t gate_timer_top = (uint32_t) note_timer_top * arpeggiator.gate_time;
-
-    setup_timers(note_timer_top, gate_timer_top);
-
-    // GPIO_PinOutSet(D6_PORT, D6_PIN);
-}
-
 int main(void) {
     static CommandHandler *const command_handlers[] = {
         [MIDI_NOTE_OFF]          = handle_note_off,
@@ -321,7 +293,7 @@ int main(void) {
     uart_init();
     __enable_irq();
 
-    setup_arpeggiator();
+    arpeggiator = setup_arpeggiator();
 
     GPIO_PinOutToggle(D6_PORT, D6_PIN);
 
@@ -339,7 +311,7 @@ int main(void) {
         if (idx > lenof(command_handlers)) continue;
 
         /* Hijacks loop if arpeggiator is on, and a key is pressed or released */
-        if (arpeggiator_on && (idx == 0 || idx == 1)) {
+        if (arpeggiator_on && (idx == MIDI_NOTE_OFF || idx == MIDI_NOTE_ON)) {
             char note = uart_next_valid_byte();
             char velocity = uart_next_valid_byte();  // Remains unused in arpeggiator
             if (idx == MIDI_NOTE_ON) {
@@ -362,16 +334,6 @@ int main(void) {
     }
 }
 
-void set_timer_tops() {
-    float beats_per_second = arpeggiator.BPM / 60.0;
-
-    uint32_t note_timer_top = (uint32_t) (((CLOCK_FREQUENCY / CLOCK_PRESCALER) / TIMER_PRESCALER) / beats_per_second) / arpeggiator.notes_per_beat;
-    uint32_t gate_timer_top = (uint32_t) note_timer_top * arpeggiator.gate_time;
-
-    set_note_timer_top(note_timer_top);
-    set_gate_timer_top(gate_timer_top);
-}
-
 // Start playing note (send single-note synth struct to FPGA, with start instruction)
 // (If implemented, tick metronome)
 void TIMER0_IRQHandler(void)
@@ -381,7 +343,7 @@ void TIMER0_IRQHandler(void)
 
     // If notes_per_beat, BPM or gate_time has changed
     if (arpeggiator.notes_per_beat != old_notes_per_beat || arpeggiator.BPM != old_BPM || arpeggiator.gate_time != old_gate_time) {
-        set_timer_tops();
+        set_timer_tops(arpeggiator);
 
         old_notes_per_beat = arpeggiator.notes_per_beat;
         old_BPM = arpeggiator.BPM;

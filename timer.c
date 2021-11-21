@@ -6,6 +6,7 @@
 #include <em_gpio.h>
 
 #include "timer.h"
+#include "arpeggiator.h"
 
 #define HFPER_CLOCK_PRESCALE cmuClkDiv_1
 #define NOTE_TIMER_PRESCALE timerPrescale1024
@@ -91,4 +92,14 @@ void set_note_timer_top(uint16_t timer_top)
 
 void set_gate_timer_top(uint16_t timer_top) {
     TIMER_TopSet(TIMER1, timer_top);
+}
+
+void set_timer_tops(Arpeggiator arpeggiator) {
+    float beats_per_second = arpeggiator.BPM / 60.0;
+
+    uint32_t note_timer_top = (uint32_t) (((CLOCK_FREQUENCY / CLOCK_PRESCALER) / TIMER_PRESCALER) / beats_per_second) / arpeggiator.notes_per_beat;
+    uint32_t gate_timer_top = (uint32_t) note_timer_top * arpeggiator.gate_time;
+
+    set_note_timer_top(note_timer_top);
+    set_gate_timer_top(gate_timer_top);
 }

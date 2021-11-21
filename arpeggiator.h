@@ -1,7 +1,17 @@
+#ifndef ARPEGGIATORH
+#define ARPEGGIATORH
+
 #include <stdint.h>
 
 #define ARP_KEYS_MAX 50
 #define ARP_LOOP_MAX 150
+
+#define START_BPM 120
+#define START_NPB 4
+#define START_GATE_TIME 0.5
+#define START_NOTE_ORDER 0
+#define START_NUM_OCTAVES 1
+#define START_DYNAMIC_NPB_SWITCHING true
 
 typedef volatile struct {
     // uint32_t held_key_freqs[ARP_KEYS_MAX];  // Defunct, replaced by held_key_notes
@@ -30,5 +40,6 @@ void set_playback_order(Arpeggiator *self, uint8_t playback_order);
 void set_num_octaves(Arpeggiator *self, uint8_t num_octaves);
 
 Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time, bool init_dynamic_NPB_switching);
-
+Arpeggiator setup_arpeggiator(void);
 char play_current_note(Arpeggiator *self);
+#endif

@@ -7,12 +7,13 @@
 // #include <em_chip.h>
 // #include <em_cmu.h>
 // #include <em_emu.h>
-// #include <em_gpio.h>
+#include <em_gpio.h>
 // #include <em_timer.h>
 // #include <gpiointerrupt.h>
 
 #include "arpeggiator.h"
 #include "util.h"
+#include "timer.h"
 
 
 bool is_ascending = true;
@@ -400,4 +401,26 @@ char play_current_note(Arpeggiator *self) {
 	}
 
 	return current_note;
+}
+
+Arpeggiator setup_arpeggiator() {
+    // GPIO setup
+    GPIO_PinModeSet(gpioPortA, 3, gpioModePushPull, 0);  // TODO: Do this wherever the rest of the LEDs are set up
+
+    // Temporary, for debugging
+    // GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 0);
+    GPIO_PinModeSet(gpioPortA, 1, gpioModePushPull, 0);
+    GPIO_PinModeSet(gpioPortA, 2, gpioModePushPull, 0);
+
+    // Initialise the arpeggiator itself
+    Arpeggiator new_arpeggiator = init_arpeggiator(START_BPM, START_NOTE_ORDER, START_NUM_OCTAVES, START_NPB, START_GATE_TIME, START_DYNAMIC_NPB_SWITCHING);
+
+    // Set up interrupts/timers
+    float beats_per_second = new_arpeggiator.BPM / 60.0;
+    uint32_t note_timer_top = (uint32_t) (((CLOCK_FREQUENCY / CLOCK_PRESCALER) / TIMER_PRESCALER) / beats_per_second) / new_arpeggiator.notes_per_beat;
+    uint32_t gate_timer_top = (uint32_t) note_timer_top * new_arpeggiator.gate_time;
+
+    setup_timers(note_timer_top, gate_timer_top);
+
+    return new_arpeggiator;
 }
