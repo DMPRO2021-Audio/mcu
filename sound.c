@@ -5,19 +5,19 @@
 #include "sound.h"
 
 static const EnvelopeStep piano_press_envelope[] = {
-    { .rate = 127, .duration = 255, },
-    { .rate = -30, .duration = 100, },
-    { .rate = -10, .duration = 255, },
+    { .rate = 130, .duration = 255, },
+    { .rate = -60, .duration = 100, },
+    { .rate = -20, .duration = 255, },
+    { .rate = -14,  .duration = 255, },
+    { .rate = -10,  .duration = 255, },
+    { .rate = -8,  .duration = 255, },
     { .rate = -7,  .duration = 255, },
-    { .rate = -5,  .duration = 255, },
-    { .rate = -4,  .duration = 255, },
-    { .rate = -4,  .duration = 255, },
-    { .rate = -3,  .duration = 255, },
+    { .rate = -6,  .duration = 255, },
 };
 
 static const EnvelopeStep organ_press_envelope[] = {
-    { .rate = 127, .duration = 255, },
-    { .rate = -30, .duration = 100, },
+    { .rate = 130, .duration = 255, },
+    { .rate = -60, .duration = 100, },
     { .rate = 0,   .duration = 255, },
     { .rate = 0,   .duration = 255, },
     { .rate = 0,   .duration = 255, },
@@ -27,36 +27,36 @@ static const EnvelopeStep organ_press_envelope[] = {
 };
 
 static const EnvelopeStep tremolo_press_envelope[] = {
-    { .rate = 127, .duration = 255, },
-    { .rate = -30, .duration = 100, },
-    { .rate = -50, .duration = 20, },
-    { .rate = 50,  .duration = 20, },
-    { .rate = -50, .duration = 20, },
-    { .rate = 50,  .duration = 20, },
-    { .rate = -50, .duration = 20, },
+    { .rate = 130, .duration = 255, },
+    { .rate = -60, .duration = 100, },
+    { .rate = -100, .duration = 50, },
+    { .rate = 100,  .duration = 50, },
+    { .rate = -100, .duration = 50, },
+    { .rate = 100,  .duration = 50, },
+    { .rate = -100, .duration = 50, },
     { .rate = 0,  .duration = 255, },
 };
 
 static const EnvelopeStep release_envelope[] = {
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
-    { .rate = -30,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
+    { .rate = -60,   .duration = 255, },
 };
 
 static const EnvelopeStep tremolo_release_envelope[] = {
-    { .rate = 15,  .duration = 25, },
-    { .rate = -30, .duration = 25, },
-    { .rate = 15,  .duration = 25, },
-    { .rate = -30, .duration = 25, },
-    { .rate = 15,  .duration = 25, },
-    { .rate = -30, .duration = 25, },
-    { .rate = 15,  .duration = 25, },
-    { .rate = -30, .duration = 25, },
+    { .rate = 100,  .duration = 50, },
+    { .rate = -200, .duration = 50, },
+    { .rate = 100,  .duration = 50, },
+    { .rate = -200, .duration = 50, },
+    { .rate = 100,  .duration = 50, },
+    { .rate = -200, .duration = 50, },
+    { .rate = 100,  .duration = 50, },
+    { .rate = -200, .duration = 50, },
 };
 
 const Program programs[] = {

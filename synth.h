@@ -37,8 +37,8 @@ enum {
 };
 
 typedef volatile struct PACKED {
-    int8_t rate; /* Named rate. Note: Interpreted as fixed point in range [0, 2)*/ // FIXME: Not very elegant
-    uint8_t duration; /* Shifted by 8: 1 = 256 samples, 255 = 65536 samples. */
+    int16_t rate; /* change per milliseconds */
+    uint8_t duration; /* milliseconds */
 } EnvelopeStep;
 
 typedef volatile struct PACKED {
