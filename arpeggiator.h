@@ -2,6 +2,7 @@
 #define ARPEGGIATORH
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define ARP_KEYS_MAX 50
 #define ARP_LOOP_MAX 150
@@ -11,7 +12,7 @@
 #define START_GATE_TIME 0.5
 #define START_NOTE_ORDER 0
 #define START_NUM_OCTAVES 1
-#define START_DYNAMIC_NPB_SWITCHING true
+#define START_DYNAMIC_NPB_SWITCHING false
 
 typedef volatile struct {
     // uint32_t held_key_freqs[ARP_KEYS_MAX];  // Defunct, replaced by held_key_notes
