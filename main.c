@@ -143,8 +143,6 @@ static void note_on(char note, char velocity) {
     w->cmds = WAVEGEN_CMD_RESET_ENVELOPE | WAVEGEN_CMD_ENABLE;
     w->shape = current_shape;
     wavegen_set_vol_envelope(w, envelope, lenof(envelope));
-
-    GPIO_PinOutSet(gpioPortA, 0);
 }
 
 static void note_off(char note, char velocity) {
@@ -172,7 +170,6 @@ static void note_off(char note, char velocity) {
     }
 
     //if (!queue_put(&wavegen_queue, &idx, 1)) exit(1);
-    GPIO_PinOutClear(gpioPortA, 0);
 }
 
 static void reset_wavegens(void) {
@@ -252,16 +249,18 @@ void handle_button(uint8_t pin) {
     case BUTTON_SW2:
     case BUTTON_SW3:
     case BUTTON_SW4:
+        break;
     case BUTTON_SW5:
         /* Toggle arpeggiator */
         if (!arpeggiator_on) {
             arpeggiator_on = true;
-            GPIO_PinOutSet(gpioPortA, 1);
+            GPIO_PinOutSet(LED_PORT, LED1);
             start_arpeggiator();
         }
         else {
             arpeggiator_on = false;
-            GPIO_PinOutClear(gpioPortA, 1);
+            GPIO_PinOutClear(LED_PORT, LED1);
+            GPIO_PinOutClear(LED_PORT, LED3);
             stop_arpeggiator();
         }
         break;
@@ -294,7 +293,7 @@ int main(void) {
 
     arpeggiator = setup_arpeggiator();
 
-    GPIO_PinOutToggle(LED_PORT, LED3);
+    // GPIO_PinOutToggle(LED_PORT, LED3);
 
     while (1) {
         uint8_t byte = uart_next_valid_byte();

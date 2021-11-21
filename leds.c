@@ -4,5 +4,8 @@
 
 void led_init()
 {
-    GPIO_PinModeSet(LED_PORT, LED3, gpioModeInput, 1);
+    GPIO_PinModeSet(LED_PORT, LED0, gpioModePushPull, 0);
+    GPIO_PinModeSet(LED_PORT, LED1, gpioModePushPull, 0);
+    GPIO_PinModeSet(LED_PORT, LED2, gpioModePushPull, 0);
+    GPIO_PinModeSet(LED_PORT, LED3, gpioModePushPull, 0);
 }

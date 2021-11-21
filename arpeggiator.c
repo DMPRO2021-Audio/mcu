@@ -404,14 +404,6 @@ char play_current_note(Arpeggiator *self) {
 }
 
 Arpeggiator setup_arpeggiator() {
-    // GPIO setup
-    GPIO_PinModeSet(gpioPortA, 3, gpioModePushPull, 0);  // TODO: Do this wherever the rest of the LEDs are set up
-
-    // Temporary, for debugging
-    // GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 0);
-    GPIO_PinModeSet(gpioPortA, 1, gpioModePushPull, 0);
-    GPIO_PinModeSet(gpioPortA, 2, gpioModePushPull, 0);
-
     // Initialise the arpeggiator itself
     Arpeggiator new_arpeggiator = init_arpeggiator(START_BPM, START_NOTE_ORDER, START_NUM_OCTAVES, START_NPB, START_GATE_TIME, START_DYNAMIC_NPB_SWITCHING);
 
