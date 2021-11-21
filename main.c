@@ -18,6 +18,7 @@
 #include "button.h"
 #include "arpeggiator.h"
 #include "timer.h"
+#include "leds.h"
 
 /* For arpeggiator */
 Arpeggiator arpeggiator;
@@ -31,10 +32,6 @@ char current_note;
 
 bool arpeggiator_on = false;
 /* For arpeggiator */
-
-// LEDs D3--D6: Port A, Pins 0--3
-#define D6_PORT gpioPortA
-#define D6_PIN 3
 
 void start_arpeggiator() {
     start_note_timer();
@@ -293,9 +290,11 @@ int main(void) {
     uart_init();
     __enable_irq();
 
+    led_init();
+
     arpeggiator = setup_arpeggiator();
 
-    GPIO_PinOutToggle(D6_PORT, D6_PIN);
+    GPIO_PinOutToggle(LED_PORT, LED3);
 
     while (1) {
         uint8_t byte = uart_next_valid_byte();
@@ -350,15 +349,15 @@ void TIMER0_IRQHandler(void)
         old_gate_time = arpeggiator.gate_time;
     }
 
-    // Handles the metronome (currently LED1 toggling)
+    // Handles the metronome (currently LED3 toggling)
     // Sort of a hack; this will usually cause a jump in the metronome whenever dynamic_NPB_switching is toggled
     if (arpeggiator.dynamic_NPB_switching) {
         if (arpeggiator.current_note_index == 0) {
-            GPIO_PinOutToggle(D6_PORT, D6_PIN);
+            GPIO_PinOutToggle(LED_PORT, LED3);
         }
     }
     else if (arpeggiator.notes_per_beat == 1 || counter % arpeggiator.notes_per_beat-1 == 0) {
-        GPIO_PinOutToggle(D6_PORT, D6_PIN);
+        GPIO_PinOutToggle(LED_PORT, LED3);
     }
 
     current_note = play_current_note(&arpeggiator);
