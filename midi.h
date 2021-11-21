@@ -18,6 +18,9 @@ enum {
 };
 
 enum {
+    MIDI_CC_BANK_SELECT_MSB = 0,
+    MIDI_CC_BANK_SELECT_LSB = 32,
+
     /* common messages */
     MIDI_CC_MODULATION_WHEEL = 1,
     MIDI_CC_BREATH_CONTROL   = 2,
@@ -42,5 +45,3 @@ enum {
     /* custom messages */
     MIDI_CC_SUSTAIN_KEY = 14,
 };
-
-extern const uint32_t notes[128]; /* maps midi note to frequency */

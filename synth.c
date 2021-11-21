@@ -1,29 +1,24 @@
 #include "util.h"
 #include "synth.h"
 
-static void set_envelope(EnvelopeStep *dst, int dstlen, EnvelopeStep *src, int srclen) {
-    if (srclen > dstlen) {
-        warn();
-        srclen = dstlen;
-    }
-
+static void set_envelope(EnvelopeStep *dst, int dstlen, const EnvelopeStep *src) {
     /* copy src to dst */
-    for (EnvelopeStep *end = src + srclen; src < end; src++, dst++) *dst = *src;
+    while (dstlen-- > 0 && src->duration) *dst++ = *src++;
 
-    /* pad remaining dst steps with {0, 0} */
-    for (EnvelopeStep *end = dst + (dstlen - srclen); dst < end; dst++) *dst = (EnvelopeStep){0, 0};
+    /* pad remainder of dst with {0, 0} */
+    while (dstlen-- > 0) *dst++ = (EnvelopeStep){0, 0};
 }
 
-void wavegen_set_vol_envelope(WaveGen *self, EnvelopeStep *steps, int nsteps) {
-    set_envelope(self->envelopes, lenof(self->envelopes), steps, nsteps);
+void wavegen_set_vol_envelope(Wavegen *self, const EnvelopeStep *steps) {
+    set_envelope(self->envelope, lenof(self->envelope), steps);
 }
 
-void wavegen_clearcmds(WaveGen *self) {
+void wavegen_clearcmds(Wavegen *self) {
     self->cmds = WAVEGEN_CMD_ENABLE;
 }
 
 void synth_clearcmds(Synth *self) {
-    for (WaveGen *w = self->wavegens; w < endof(self->wavegens); w++) {
+    for (Wavegen *w = self->wavegens; w < endof(self->wavegens); w++) {
         wavegen_clearcmds(w);
     }
 }
