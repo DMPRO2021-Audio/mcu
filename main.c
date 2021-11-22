@@ -87,7 +87,7 @@ static void complete_synth_transfer(SPIDRV_Handle_t handle, Ecode_t status, int 
     if (nbytes != sizeof(synth)) return;
     synth_clearcmds(&synth);
     GPIO_PinOutSet(gpioPortE, 13);
-    GPIO_PinOutClear(gpioPortA, 0);
+    GPIO_PinOutClear(LED_PORT, LED0);
 }
 
 static void abort_synth_transfer(void) {
@@ -98,7 +98,7 @@ static void abort_synth_transfer(void) {
 }
 
 static void start_synth_transfer(void) {
-    GPIO_PinOutSet(gpioPortA, 0);
+    GPIO_PinOutSet(LED_PORT, LED0);
     GPIO_PinOutClear(gpioPortE, 13);
     ecode = SPIDRV_MTransmit(&synth_spi, (void *)&synth, sizeof(synth), complete_synth_transfer);
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
@@ -117,12 +117,13 @@ static void handle_note_off(char status) {
 }
 
 static void handle_note_on(char status) {
+    char channel = status & MIDI_CHANNEL_MASK;
     Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
     if (arpeggiator_on) {
-        add_held_key(&arpeggiator, key);
+        add_held_key(&arpeggiator, key, channel);
     } else {
         channel_note_on(c, key, velocity / 127.0);
     }
@@ -136,11 +137,12 @@ static void handle_control_change(char status) {
     switch (ctrl) {
     case MIDI_CC_MODULATION_WHEEL:
     case MIDI_CC_VOLUME:
-        c->gain = value / 127.0;
+        // c->gain = value / 127.0;
+        synth.master_volume = value << 2;
         break;
     case MIDI_CC_SUSTAIN_KEY:
     case MIDI_CC_SUSTAIN_PEDAL:
-        c->sustain = value;
+        c->sustain = !value;
         break;
     case MIDI_CC_ALL_SOUND_OFF:
         channel_all_notes_off(c, true);
@@ -293,7 +295,7 @@ void TIMER0_IRQHandler(void)
     }
 
     abort_synth_transfer();
-    channel_note_on(&channels[0], current_note, 1.0);
+    channel_note_on(&channels[(size_t) current_channel(&arpeggiator)], current_note, 1.0);
     start_synth_transfer();
 
     counter++;
@@ -310,7 +312,7 @@ void TIMER1_IRQHandler(void)
     abort_synth_transfer();
     // NB: Assumes current_note has not changed since last TIMER0 interrupt.
     // Will not hold if gate_time is e.g. greater than 1
-    channel_note_off(&channels[0], current_note, 0);
+    channel_note_off(&channels[(size_t) current_channel(&arpeggiator)], current_note, 0);
     start_synth_transfer();
 
     stop_gate_timer();

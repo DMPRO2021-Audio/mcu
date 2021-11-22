@@ -1,3 +1,6 @@
+#ifndef SYNTHH
+#define SYNTHH
+
 #include <stdint.h>
 
 #define F_SAMPLE (48ul*1000) /* 48kHz sample rate */
@@ -75,3 +78,5 @@ typedef volatile struct PACKED {
 void wavegen_set_vol_envelope(Wavegen *self, const EnvelopeStep *steps);
 void wavegen_clearcmds(Wavegen *self);
 void synth_clearcmds(Synth *self);
+
+#endif
