@@ -21,7 +21,6 @@ typedef struct {
     uint8_t shape;
     const EnvelopeStep *press_envelope;
     const EnvelopeStep *release_envelope;
-    uint8_t reverb;
 } Program;
 
 extern const Program programs[];
