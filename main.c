@@ -115,7 +115,7 @@ static void handle_note_off(char status) {
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
-    if (arpeggiator_on && c == arp_channel) {
+    if (c == arp_channel) {
         remove_held_key(&arpeggiator, key);
     }
     channel_note_off(c, key, velocity / 127.0);
@@ -126,7 +126,7 @@ static void handle_note_on(char status) {
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
-    if (arpeggiator_on && c == arp_channel) {
+    if (c == arp_channel) {
         add_held_key(&arpeggiator, key);
     } else {
         channel_note_on(c, key, velocity / 127.0);
@@ -187,25 +187,57 @@ static void handle_pitch_bend_change(char status) {
 void handle_button(uint8_t pin) {
     switch(pin) {
     case BUTTON_SW1:
+        if (arpeggiator_on) {
+            set_gate_time(&arpeggiator, arpeggiator.gate_time - 0.1);
+        }
+        else {
+            // Handle reverb preset browsing
+        }
+        break;
     case BUTTON_SW2:
+        if (arpeggiator_on) {
+            set_gate_time(&arpeggiator, arpeggiator.gate_time + 0.1);
+        }
+        else {
+            if (arpeggiator.dynamic_NPB_switching) {
+                arpeggiator.dynamic_NPB_switching = false;
+                set_notes_per_beat(&arpeggiator, 4);
+            }
+            else {
+                arpeggiator.dynamic_NPB_switching = true;
+            }
+        }
+        break;
     case BUTTON_SW3:
+        if (arpeggiator_on) {
+            set_BPM(&arpeggiator, arpeggiator.BPM - 10);
+        }
+        else {
+            // Browse playback order
+            set_playback_order(&arpeggiator, (arpeggiator.playback_order + 1) % 4);
+        }
+        break;
     case BUTTON_SW4:
+        if (arpeggiator_on) {
+            set_BPM(&arpeggiator, arpeggiator.BPM + 10);
+        }
+        else {
+            // Funky modulo because num_octaves ranges between 1-3, not 0-2
+            set_num_octaves(&arpeggiator, (arpeggiator.num_octaves % 3)+1);
+        }
         break;
     case BUTTON_SW5:
         /* Toggle arpeggiator */
         if (!arpeggiator_on) {
             arpeggiator_on = true;
             GPIO_PinOutSet(LED_PORT, LED1);
-            start_arpeggiator();
         }
         else {
             arpeggiator_on = false;
             GPIO_PinOutClear(LED_PORT, LED1);
             GPIO_PinOutClear(LED_PORT, LED3);
-            stop_arpeggiator();
         }
         break;
-
     default:
         break;
     }
@@ -226,17 +258,6 @@ void update_arpeggiator(void) {
             old_notes_per_beat = arpeggiator.notes_per_beat;
             old_BPM = arpeggiator.BPM;
             old_gate_time = arpeggiator.gate_time;
-        }
-
-        // Handles the metronome (currently LED3 toggling)
-        // Sort of a hack; this will usually cause a jump in the metronome whenever dynamic_NPB_switching is toggled
-        if (arpeggiator.dynamic_NPB_switching) {
-            if (arpeggiator.current_note_index == 0) {
-                GPIO_PinOutToggle(LED_PORT, LED3);
-            }
-        }
-        else if (arpeggiator.notes_per_beat == 1 || counter % arpeggiator.notes_per_beat-1 == 0) {
-            GPIO_PinOutToggle(LED_PORT, LED3);
         }
 
         current_note = play_current_note(&arpeggiator);
@@ -298,6 +319,7 @@ int main(void) {
     led_init();
 
     arpeggiator = setup_arpeggiator();
+    start_arpeggiator();
 
     while (1) {
         while (!event_flag) __WFI();
@@ -315,10 +337,22 @@ int main(void) {
 // (If implemented, tick metronome)
 void TIMER0_IRQHandler(void)
 {
+    
     // Clear flag for TIMER0 OF interrupt
     TIMER_IntClear(TIMER0, TIMER_IF_OF);
 
-    if (arpeggiator.loop_length == 0 || current_note == 0) return;
+    // Handles the metronome (currently LED3 toggling)
+    // Sort of a hack; this will usually cause a jump in the metronome whenever dynamic_NPB_switching is toggled
+    if (arpeggiator.dynamic_NPB_switching) {
+        if (arpeggiator.current_note_index == 0) {
+            GPIO_PinOutToggle(LED_PORT, LED3);
+        }
+    }
+    else if (arpeggiator.notes_per_beat == 1 || counter % arpeggiator.notes_per_beat-1 == 0) {
+        GPIO_PinOutToggle(LED_PORT, LED3);
+    }
+    
+    if (arpeggiator.loop_length == 0) return;
     event_flag = arpeggiator_note_on_flag = true;
     start_gate_timer();
 }

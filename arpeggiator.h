@@ -39,6 +39,7 @@ void set_BPM(Arpeggiator *self, uint16_t new_BPM);
 void set_notes_per_beat(Arpeggiator *self, uint8_t new_notes_per_beat);
 void set_playback_order(Arpeggiator *self, uint8_t playback_order);
 void set_num_octaves(Arpeggiator *self, uint8_t num_octaves);
+void set_gate_time(Arpeggiator *self, float new_gate_time);
 
 Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time, bool init_dynamic_NPB_switching);
 Arpeggiator setup_arpeggiator(void);
