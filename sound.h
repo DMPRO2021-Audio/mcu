@@ -14,7 +14,6 @@
 #define REVERB_PRESET_LARGE_ROOM 2
 #define REVERB_PRESET_HALL 3
 
-int currrent_reverb_preset;
 extern const Reverb reverb_presets[REVERB_PRESET_LEN];
 
 typedef struct {

@@ -35,6 +35,8 @@ volatile char current_note;
 volatile bool event_flag = true;
 volatile bool arpeggiator_note_off_flag, arpeggiator_note_on_flag;
 
+int current_reverb_preset;
+
 bool arpeggiator_on = false;
 /* For arpeggiator */
 
