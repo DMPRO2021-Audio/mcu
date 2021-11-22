@@ -87,7 +87,7 @@ static void complete_synth_transfer(SPIDRV_Handle_t handle, Ecode_t status, int 
     if (nbytes != sizeof(synth)) return;
     synth_clearcmds(&synth);
     GPIO_PinOutSet(gpioPortE, 13);
-    GPIO_PinOutClear(gpioPortA, 0);
+    GPIO_PinOutClear(LED_PORT, LED0);
 }
 
 static void abort_synth_transfer(void) {
@@ -98,7 +98,7 @@ static void abort_synth_transfer(void) {
 }
 
 static void start_synth_transfer(void) {
-    GPIO_PinOutSet(gpioPortA, 0);
+    GPIO_PinOutSet(LED_PORT, LED0);
     GPIO_PinOutClear(gpioPortE, 13);
     ecode = SPIDRV_MTransmit(&synth_spi, (void *)&synth, sizeof(synth), complete_synth_transfer);
     if (ecode != ECODE_EMDRV_SPIDRV_OK) exit(1);
@@ -136,11 +136,12 @@ static void handle_control_change(char status) {
     switch (ctrl) {
     case MIDI_CC_MODULATION_WHEEL:
     case MIDI_CC_VOLUME:
-        c->gain = value / 127.0;
+        // c->gain = value / 127.0;
+        synth.master_volume = value << 2;
         break;
     case MIDI_CC_SUSTAIN_KEY:
     case MIDI_CC_SUSTAIN_PEDAL:
-        c->sustain = value;
+        c->sustain = !value;
         break;
     case MIDI_CC_ALL_SOUND_OFF:
         channel_all_notes_off(c, true);
