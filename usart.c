@@ -9,6 +9,8 @@
 #define BUFFERSIZE 256
 #define INTERRUPTLVL 6
 
+extern volatile bool event_flag;
+
 const uint32_t BAUD = 31250;
 const uint32_t OVS = 16;
 
@@ -47,6 +49,7 @@ void UART0_RX_IRQHandler(void) {
     if(UART0->IF & (UART_IF_RXDATAV | UART_IF_RXFULL)) {
         ch = UART0->RXDATA;
         circular_buffer_push(&circular_buffer, ch);
+        event_flag = true;
     }
 }
 
