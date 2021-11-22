@@ -68,6 +68,7 @@ Synth synth = {
 };
 
 Channel channels[16];
+Channel *arp_channel = &channels[9];
 
 SPIDRV_HandleData_t synth_spi;
 
@@ -112,20 +113,19 @@ static void handle_note_off(char status) {
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
-    if (arpeggiator_on) {
+    if (arpeggiator_on && c == arp_channel) {
         remove_held_key(&arpeggiator, key);
     }
     channel_note_off(c, key, velocity / 127.0);
 }
 
 static void handle_note_on(char status) {
-    char channel = status & MIDI_CHANNEL_MASK;
     Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
-    if (arpeggiator_on) {
-        add_held_key(&arpeggiator, key, channel);
+    if (arpeggiator_on && c == arp_channel) {
+        add_held_key(&arpeggiator, key);
     } else {
         channel_note_on(c, key, velocity / 127.0);
     }
@@ -212,7 +212,7 @@ void handle_button(uint8_t pin) {
 void update_arpeggiator(void) {
     if (arpeggiator_note_off_flag) {
         arpeggiator_note_off_flag = false;
-        channel_note_off(&channels[(size_t) current_channel(&arpeggiator)], current_note, 0);
+        channel_note_off(arp_channel, current_note, 0);
     }
     if (arpeggiator_note_on_flag) {
         arpeggiator_note_on_flag = false;
@@ -243,7 +243,7 @@ void update_arpeggiator(void) {
         if (arpeggiator.loop_length == 0 || current_note == 0) {
             return;
         }
-        channel_note_on(&channels[(size_t) current_channel(&arpeggiator)], current_note, 1.0);
+        channel_note_on(arp_channel, current_note, 1.0);
     }
 }
 

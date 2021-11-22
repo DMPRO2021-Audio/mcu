@@ -17,7 +17,6 @@
 typedef volatile struct {
     // uint32_t held_key_freqs[ARP_KEYS_MAX];  // Defunct, replaced by held_key_notes
     char held_key_notes[ARP_KEYS_MAX];  // Holds the MIDI note values of all held keys
-    char held_key_channels[ARP_KEYS_MAX];  // Holds the channel for the notes 
     uint8_t num_held_keys;
     char arp_loop[ARP_LOOP_MAX];
     uint8_t loop_length;
@@ -33,7 +32,7 @@ typedef volatile struct {
     bool dynamic_NPB_switching;
 } Arpeggiator;
 
-void add_held_key(Arpeggiator *self, char freq, char channel);
+void add_held_key(Arpeggiator *self, char freq);
 void remove_held_key(Arpeggiator *self, char freq);
 
 void set_BPM(Arpeggiator *self, uint16_t new_BPM);
@@ -44,5 +43,4 @@ void set_num_octaves(Arpeggiator *self, uint8_t num_octaves);
 Arpeggiator init_arpeggiator(uint16_t init_BPM, uint8_t init_playback_order, uint8_t init_num_octaves, uint8_t init_notes_per_beat, float init_gate_time, bool init_dynamic_NPB_switching);
 Arpeggiator setup_arpeggiator(void);
 char play_current_note(Arpeggiator *self);
-char current_channel(Arpeggiator *self);
 #endif

@@ -246,12 +246,11 @@ void update_loop(Arpeggiator *self) {
 }
 
 /* Adds a new key to the array and updates the arpeggiator loop, preserving position in the loop. */
-void add_held_key(Arpeggiator *self, char note, char channel) {
+void add_held_key(Arpeggiator *self, char note) {
     for (uint8_t i = 0; i < lenof(self->held_key_notes); i++)
     {
         if (self->held_key_notes[i]==0) {
             self->held_key_notes[i] = note;
-            self->held_key_channels[i] = channel;
             self->num_held_keys++;
             break;
         }
@@ -278,12 +277,10 @@ void remove_held_key(Arpeggiator *self, char note) {
             // Move all remaining elements one step up
             if (i != lenof(self->held_key_notes)-1) {
                 self->held_key_notes[i] = self->held_key_notes[i+1];
-                self->held_key_channels[i] = self->held_key_channels[i+1];
             }
             // Set the final element to 0
             else {
                 self->held_key_notes[i] = 0;
-                self->held_key_channels[i] = 0;
             }
         }
     }
@@ -405,12 +402,6 @@ char play_current_note(Arpeggiator *self) {
 
     return current_note;
 }
-
-char current_channel(Arpeggiator *self)
-{
-    return self->held_key_channels[self->current_note_index];
-}
-
 
 Arpeggiator setup_arpeggiator() {
     // Initialise the arpeggiator itself
