@@ -316,8 +316,8 @@ void TIMER0_IRQHandler(void)
     // Clear flag for TIMER0 OF interrupt
     TIMER_IntClear(TIMER0, TIMER_IF_OF);
 
+    if (arpeggiator.loop_length == 0 || current_note == 0) return;
     event_flag = arpeggiator_note_on_flag = true;
-
     start_gate_timer();
 }
 
