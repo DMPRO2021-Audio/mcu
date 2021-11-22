@@ -26,6 +26,27 @@ static const EnvelopeStep organ_press_envelope[] = {
     { .rate = 0,   .duration = 255, },
 };
 
+static const EnvelopeStep constant_press_envelope[] = {
+    { .rate = 32767, .duration = 2, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+};
+static const EnvelopeStep constant_release_envelope[] = {
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = 0,   .duration = 1, },
+    { .rate = -32767, .duration = 255,},
+};
+
 static const EnvelopeStep tremolo_press_envelope[] = {
     { .rate = 130, .duration = 255, },
     { .rate = -60, .duration = 100, },
@@ -111,15 +132,20 @@ const Reverb reverb_presets[REVERB_PRESET_LEN] = {
 };
 
 const Program programs[] = {
-    {WAVEGEN_SHAPE_PIANO, piano_press_envelope, release_envelope, REVERB_PRESET_LARGE_ROOM},
-    {WAVEGEN_SHAPE_SAWTOOTH, piano_press_envelope, release_envelope, REVERB_PRESET_SMALL_ROOM},
-    {WAVEGEN_SHAPE_SQUARE, piano_press_envelope, release_envelope, REVERB_PRESET_LARGE_ROOM},
-    {WAVEGEN_SHAPE_SINE, piano_press_envelope, release_envelope, REVERB_PRESET_LARGE_ROOM},
-    {WAVEGEN_SHAPE_PIANO, organ_press_envelope, release_envelope, REVERB_PRESET_HALL},
-    {WAVEGEN_SHAPE_SAWTOOTH, organ_press_envelope, release_envelope, REVERB_PRESET_OFF},
-    {WAVEGEN_SHAPE_SQUARE, organ_press_envelope, release_envelope, REVERB_PRESET_OFF},
-    {WAVEGEN_SHAPE_SINE, organ_press_envelope, release_envelope, REVERB_PRESET_OFF},
-    {WAVEGEN_SHAPE_SAWTOOTH, tremolo_press_envelope, tremolo_release_envelope, REVERB_PRESET_OFF},
+    {WAVEGEN_SHAPE_PIANO, piano_press_envelope, release_envelope},                  // 0. Piano
+    {WAVEGEN_SHAPE_PIANO, organ_press_envelope, release_envelope},                  // 1. Organ
+    {WAVEGEN_SHAPE_GUITAR, piano_press_envelope, release_envelope},                 // 2. Guitar
+    {WAVEGEN_SHAPE_FLUTE, organ_press_envelope, release_envelope},                  // 3. FLute??
+    {WAVEGEN_SHAPE_SAWTOOTH, constant_press_envelope, constant_release_envelope},   // 4. Straight sawtooth
+    {WAVEGEN_SHAPE_SINE, constant_press_envelope, constant_release_envelope},       // 5. Straight sine
+    {WAVEGEN_SHAPE_SQUARE, constant_press_envelope, constant_release_envelope},     // 6. Straight square
+    {WAVEGEN_SHAPE_SAWTOOTH, piano_press_envelope, release_envelope},
+    {WAVEGEN_SHAPE_SQUARE, piano_press_envelope, release_envelope},
+    {WAVEGEN_SHAPE_SINE, piano_press_envelope, release_envelope},
+    {WAVEGEN_SHAPE_SAWTOOTH, organ_press_envelope, release_envelope},   // Saw
+    {WAVEGEN_SHAPE_SQUARE, organ_press_envelope, release_envelope},
+    {WAVEGEN_SHAPE_SINE, organ_press_envelope, release_envelope},
+    {WAVEGEN_SHAPE_SAWTOOTH, tremolo_press_envelope, tremolo_release_envelope},
 };
 
 const int num_programs = lenof(programs);
