@@ -117,12 +117,13 @@ static void handle_note_off(char status) {
 }
 
 static void handle_note_on(char status) {
+    char channel = status & MIDI_CHANNEL_MASK;
     Channel *c = &channels[status & MIDI_CHANNEL_MASK];
     char key = uart_next_valid_byte();
     char velocity = uart_next_valid_byte();
 
     if (arpeggiator_on) {
-        add_held_key(&arpeggiator, key);
+        add_held_key(&arpeggiator, key, channel);
     } else {
         channel_note_on(c, key, velocity / 127.0);
     }
@@ -294,7 +295,7 @@ void TIMER0_IRQHandler(void)
     }
 
     abort_synth_transfer();
-    channel_note_on(&channels[0], current_note, 1.0);
+    channel_note_on(&channels[(size_t) current_channel(&arpeggiator)], current_note, 1.0);
     start_synth_transfer();
 
     counter++;
@@ -311,7 +312,7 @@ void TIMER1_IRQHandler(void)
     abort_synth_transfer();
     // NB: Assumes current_note has not changed since last TIMER0 interrupt.
     // Will not hold if gate_time is e.g. greater than 1
-    channel_note_off(&channels[0], current_note, 0);
+    channel_note_off(&channels[(size_t) current_channel(&arpeggiator)], current_note, 0);
     start_synth_transfer();
 
     stop_gate_timer();
