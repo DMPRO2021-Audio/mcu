@@ -1,5 +1,6 @@
 # IDEs
 .vscode/
+tags
 
 ### macOS ###
 # General
@@ -12,7 +13,6 @@ $RECYCLE.BIN/
 *.cab
 *.msi
 *.exe
-
 
 # builds
 *.o
