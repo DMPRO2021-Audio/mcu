@@ -51,7 +51,7 @@ static void channel_update_wavegen(Channel *self, WavegenStatus *ws) {
     if (!self->program) return;
     w = get_wavegen_state(ws);
     w->freq = freq_from_note(ws->note + self->pitch_bend);
-    w->velocity = 10000ul * ws->velocity; // * self->gain;
+    w->velocity = 10000ul * ws->velocity * self->gain;
     w->shape = self->program->shape;
     if (ws->pressed) {
         wavegen_set_vol_envelope(w, self->program->press_envelope);

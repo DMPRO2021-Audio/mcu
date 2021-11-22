@@ -139,8 +139,7 @@ static void handle_control_change(char status) {
     switch (ctrl) {
     case MIDI_CC_MODULATION_WHEEL:
     case MIDI_CC_VOLUME:
-        // c->gain = value / 127.0;
-        synth.master_volume = value << 2;
+        c->gain = value / 127.0;
         break;
     case MIDI_CC_SUSTAIN_KEY:
     case MIDI_CC_SUSTAIN_PEDAL:
