@@ -16,7 +16,7 @@ typedef struct {
 
 extern Synth synth;
 
-WavegenStatus wavegen_status[SYNTH_WAVEGEN_COUNT];
+WavegenStatus wavegen_status[SYNTH_WAVEGEN_COUNT - 1];
 List free_wavegens_first, free_wavegens_last;
 
 static WavegenStatus *alloc_wavegen(void) {
@@ -67,6 +67,7 @@ void channel_note_off(Channel *self, char note, float velocity) {
     ws->pressed = false;
     channel_update_wavegen(self, ws);
     free_wavegen(ws);
+    get_wavegen_state(ws)->cmds |= WAVEGEN_CMD_RESET_ENVELOPE;
 }
 
 void channel_note_on(Channel *self, char note, float velocity) {

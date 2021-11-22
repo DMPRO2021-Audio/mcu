@@ -16,7 +16,7 @@ static const EnvelopeStep piano_press_envelope[] = {
 };
 
 static const EnvelopeStep organ_press_envelope[] = {
-    { .rate = 130, .duration = 255, },
+    { .rate = 260, .duration = 255, },
     { .rate = -60, .duration = 100, },
     { .rate = 0,   .duration = 255, },
     { .rate = 0,   .duration = 255, },
@@ -26,29 +26,8 @@ static const EnvelopeStep organ_press_envelope[] = {
     { .rate = 0,   .duration = 255, },
 };
 
-static const EnvelopeStep constant_press_envelope[] = {
-    { .rate = 32767, .duration = 2, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-};
-static const EnvelopeStep constant_release_envelope[] = {
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = 0,   .duration = 1, },
-    { .rate = -32767, .duration = 255,},
-};
-
 static const EnvelopeStep tremolo_press_envelope[] = {
-    { .rate = 130, .duration = 255, },
+    { .rate = 260, .duration = 255, },
     { .rate = -60, .duration = 100, },
     { .rate = -100, .duration = 50, },
     { .rate = 100,  .duration = 50, },
@@ -78,6 +57,16 @@ static const EnvelopeStep tremolo_release_envelope[] = {
     { .rate = -200, .duration = 50, },
     { .rate = 100,  .duration = 50, },
     { .rate = -200, .duration = 50, },
+};
+
+static const EnvelopeStep quick_press_envelope[] = {
+    { .rate = 10000, .duration = 255, },
+    {0}
+};
+
+static const EnvelopeStep quick_release_envelope[] = {
+    { .rate = -10000, .duration = 255, },
+    {0}
 };
 
 const Reverb reverb_presets[REVERB_PRESET_LEN] = {
@@ -131,14 +120,15 @@ const Reverb reverb_presets[REVERB_PRESET_LEN] = {
     },
 };
 
+
 const Program programs[] = {
-    {WAVEGEN_SHAPE_PIANO, piano_press_envelope, release_envelope},                  // 0. Piano
-    {WAVEGEN_SHAPE_PIANO, organ_press_envelope, release_envelope},                  // 1. Organ
-    {WAVEGEN_SHAPE_GUITAR, piano_press_envelope, release_envelope},                 // 2. Guitar
-    {WAVEGEN_SHAPE_FLUTE, organ_press_envelope, release_envelope},                  // 3. FLute??
-    {WAVEGEN_SHAPE_SAWTOOTH, constant_press_envelope, constant_release_envelope},   // 4. Straight sawtooth
-    {WAVEGEN_SHAPE_SINE, constant_press_envelope, constant_release_envelope},       // 5. Straight sine
-    {WAVEGEN_SHAPE_SQUARE, constant_press_envelope, constant_release_envelope},     // 6. Straight square
+    {WAVEGEN_SHAPE_PIANO, piano_press_envelope, release_envelope},          // 0. Piano
+    {WAVEGEN_SHAPE_PIANO, organ_press_envelope, release_envelope},          // 1. Organ
+    {WAVEGEN_SHAPE_GUITAR, piano_press_envelope, release_envelope},         // 2. Guitar
+    {WAVEGEN_SHAPE_FLUTE, organ_press_envelope, release_envelope},          // 3. FLute??
+    {WAVEGEN_SHAPE_SAWTOOTH, quick_press_envelope, quick_release_envelope}, // 4. Straight sawtooth
+    {WAVEGEN_SHAPE_SINE, quick_press_envelope, quick_release_envelope},     // 5. Straight sine
+    {WAVEGEN_SHAPE_SQUARE, quick_press_envelope, quick_release_envelope},   // 6. Straight square
     {WAVEGEN_SHAPE_SAWTOOTH, piano_press_envelope, release_envelope},
     {WAVEGEN_SHAPE_SQUARE, piano_press_envelope, release_envelope},
     {WAVEGEN_SHAPE_SINE, piano_press_envelope, release_envelope},
@@ -146,6 +136,7 @@ const Program programs[] = {
     {WAVEGEN_SHAPE_SQUARE, organ_press_envelope, release_envelope},
     {WAVEGEN_SHAPE_SINE, organ_press_envelope, release_envelope},
     {WAVEGEN_SHAPE_SAWTOOTH, tremolo_press_envelope, tremolo_release_envelope},
+    {WAVEGEN_SHAPE_SAWTOOTH, quick_press_envelope, quick_release_envelope},
 };
 
 const int num_programs = lenof(programs);
