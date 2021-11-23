@@ -188,29 +188,34 @@ void handle_button(uint8_t pin) {
     switch(pin) {
     case BUTTON_SW1:
         if (arpeggiator_on) {
-            set_gate_time(&arpeggiator, arpeggiator.gate_time - 0.1);
+            set_gate_time(&arpeggiator, arpeggiator.gate_time - 0.05);
         }
         else {
-            // Handle reverb preset browsing
+            // Handle reverb preset browsing (NOTE: abort and perform synth transfer, )
+            // current_reverb_preset = current_reverb_preset+1 % REVERB_PRESET_LEN;
+            // synth.reverb = reverb_presets[current_reverb_preset];
         }
         break;
     case BUTTON_SW2:
         if (arpeggiator_on) {
-            set_gate_time(&arpeggiator, arpeggiator.gate_time + 0.1);
+            set_gate_time(&arpeggiator, arpeggiator.gate_time + 0.05);
         }
         else {
             if (arpeggiator.dynamic_NPB_switching) {
                 arpeggiator.dynamic_NPB_switching = false;
                 set_notes_per_beat(&arpeggiator, 4);
+                GPIO_PinOutClear(LED_PORT, LED2);
             }
             else {
                 arpeggiator.dynamic_NPB_switching = true;
+                GPIO_PinOutSet(LED_PORT, LED2);
+                set_notes_per_beat(&arpeggiator, arpeggiator.num_held_keys);
             }
         }
         break;
     case BUTTON_SW3:
         if (arpeggiator_on) {
-            set_BPM(&arpeggiator, arpeggiator.BPM - 10);
+            set_BPM(&arpeggiator, arpeggiator.BPM - 5);
         }
         else {
             // Browse playback order
@@ -219,7 +224,7 @@ void handle_button(uint8_t pin) {
         break;
     case BUTTON_SW4:
         if (arpeggiator_on) {
-            set_BPM(&arpeggiator, arpeggiator.BPM + 10);
+            set_BPM(&arpeggiator, arpeggiator.BPM + 5);
         }
         else {
             // Funky modulo because num_octaves ranges between 1-3, not 0-2
@@ -251,18 +256,8 @@ void update_arpeggiator(void) {
     if (arpeggiator_note_on_flag) {
         arpeggiator_note_on_flag = false;
 
-        // If notes_per_beat, BPM or gate_time has changed
-        if (arpeggiator.notes_per_beat != old_notes_per_beat || arpeggiator.BPM != old_BPM || arpeggiator.gate_time != old_gate_time) {
-            set_timer_tops(arpeggiator);
-
-            old_notes_per_beat = arpeggiator.notes_per_beat;
-            old_BPM = arpeggiator.BPM;
-            old_gate_time = arpeggiator.gate_time;
-        }
-
         current_note = play_current_note(&arpeggiator);
 
-        counter++;
         if (arpeggiator.loop_length == 0 || current_note == 0) {
             return;
         }
@@ -337,9 +332,20 @@ int main(void) {
 // (If implemented, tick metronome)
 void TIMER0_IRQHandler(void)
 {
-    
     // Clear flag for TIMER0 OF interrupt
     TIMER_IntClear(TIMER0, TIMER_IF_OF);
+
+    // If notes_per_beat, BPM or gate_time has changed
+        if (arpeggiator.notes_per_beat != old_notes_per_beat || arpeggiator.BPM != old_BPM || arpeggiator.gate_time != old_gate_time) {
+            set_timer_tops(arpeggiator);
+
+            old_notes_per_beat = arpeggiator.notes_per_beat;
+            old_BPM = arpeggiator.BPM;
+            old_gate_time = arpeggiator.gate_time;
+        }
+
+    // Increment counter (for metronome handling)
+    counter++;
 
     // Handles the metronome (currently LED3 toggling)
     // Sort of a hack; this will usually cause a jump in the metronome whenever dynamic_NPB_switching is toggled
@@ -351,7 +357,7 @@ void TIMER0_IRQHandler(void)
     else if (arpeggiator.notes_per_beat == 1 || counter % arpeggiator.notes_per_beat-1 == 0) {
         GPIO_PinOutToggle(LED_PORT, LED3);
     }
-    
+
     if (arpeggiator.loop_length == 0) return;
     event_flag = arpeggiator_note_on_flag = true;
     start_gate_timer();
