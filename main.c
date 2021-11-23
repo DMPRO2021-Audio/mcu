@@ -192,8 +192,8 @@ void handle_button(uint8_t pin) {
         }
         else {
             // Handle reverb preset browsing (NOTE: abort and perform synth transfer, )
-            // current_reverb_preset = current_reverb_preset+1 % REVERB_PRESET_LEN;
-            // synth.reverb = reverb_presets[current_reverb_preset];
+            current_reverb_preset = (current_reverb_preset+1) % REVERB_PRESET_LEN;
+            event_flag = true;
         }
         break;
     case BUTTON_SW2:
@@ -204,11 +204,11 @@ void handle_button(uint8_t pin) {
             if (arpeggiator.dynamic_NPB_switching) {
                 arpeggiator.dynamic_NPB_switching = false;
                 set_notes_per_beat(&arpeggiator, 4);
-                GPIO_PinOutClear(LED_PORT, LED2);
+                GPIO_PinOutClear(LED_PORT, LED1);
             }
             else {
                 arpeggiator.dynamic_NPB_switching = true;
-                GPIO_PinOutSet(LED_PORT, LED2);
+                GPIO_PinOutSet(LED_PORT, LED1);
                 set_notes_per_beat(&arpeggiator, arpeggiator.num_held_keys);
             }
         }
@@ -235,11 +235,11 @@ void handle_button(uint8_t pin) {
         /* Toggle arpeggiator */
         if (!arpeggiator_on) {
             arpeggiator_on = true;
-            GPIO_PinOutSet(LED_PORT, LED1);
+            GPIO_PinOutSet(LED_PORT, LED2);
         }
         else {
             arpeggiator_on = false;
-            GPIO_PinOutClear(LED_PORT, LED1);
+            GPIO_PinOutClear(LED_PORT, LED2);
             GPIO_PinOutClear(LED_PORT, LED3);
         }
         break;
@@ -321,6 +321,7 @@ int main(void) {
         event_flag = false;
         abort_synth_transfer();
 
+        synth.reverb = reverb_presets[current_reverb_preset];
         update_arpeggiator();
         recv_midi_command();
 
