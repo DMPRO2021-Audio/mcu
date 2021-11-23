@@ -3,7 +3,7 @@
 
 static void set_envelope(EnvelopeStep *dst, int dstlen, const EnvelopeStep *src) {
     /* copy src to dst */
-    while (dstlen-- > 0 && src->duration) *dst++ = *src++;
+    while (src->duration && dstlen-- > 0) *dst++ = *src++;
 
     /* pad remainder of dst with {0, 0} */
     while (dstlen-- > 0) *dst++ = (EnvelopeStep){0, 0};
