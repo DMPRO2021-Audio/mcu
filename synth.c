@@ -11,6 +11,7 @@ static void set_envelope(EnvelopeStep *dst, int dstlen, const EnvelopeStep *src)
 
 void wavegen_set_vol_envelope(Wavegen *self, const EnvelopeStep *steps) {
     set_envelope(self->envelope, lenof(self->envelope), steps);
+    self->cmds |= WAVEGEN_CMD_REWIND_ENVELOPE;
 }
 
 void wavegen_clearcmds(Wavegen *self) {

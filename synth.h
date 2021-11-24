@@ -31,7 +31,7 @@ enum {
 };
 
 enum {
-    WAVEGEN_CMD_RESET_ENVELOPE = 1<<0,
+    WAVEGEN_CMD_REWIND_ENVELOPE = 1<<0,
     WAVEGEN_CMD_ENABLE = 1<<1,
 };
 
@@ -70,7 +70,7 @@ typedef volatile struct PACKED {
 
 typedef volatile struct PACKED {
     Wavegen wavegens[SYNTH_WAVEGEN_COUNT];
-    uint32_t master_volume; /* Named master_volume */
+    uint32_t master_volume;
     Reverb reverb;
     Pan pan;
 } Synth;

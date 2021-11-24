@@ -45,7 +45,7 @@ static WavegenStatus *channel_get_note_wavegen(Channel *self, char note) {
     return NULL;
 }
 
-static void channel_update_wavegen(Channel *self, WavegenStatus *ws) {
+static void channel_update_wavegen(Channel *self, WavegenStatus *ws, bool set_envelope) {
     Wavegen *w;
 
     if (!self->program) return;
@@ -53,21 +53,21 @@ static void channel_update_wavegen(Channel *self, WavegenStatus *ws) {
     w->freq = freq_from_note(ws->note + self->pitch_bend);
     w->velocity = 10000ul * ws->velocity * self->gain;
     w->shape = self->program->shape;
-    if (ws->pressed) {
-        wavegen_set_vol_envelope(w, self->program->press_envelope);
-    } else if (!self->sustain) {
-        wavegen_set_vol_envelope(w, self->program->release_envelope);
+    if (set_envelope) {
+        wavegen_set_vol_envelope(w, ws->pressed ?
+            self->program->press_envelope : self->program->release_envelope
+        );
     }
 }
 
 void channel_note_off(Channel *self, char note, float velocity) {
-    WavegenStatus *ws = channel_get_note_wavegen(self, note);
+    WavegenStatus *ws;
 
+    ws = channel_get_note_wavegen(self, note);
     if (!ws) return;
     ws->pressed = false;
-    channel_update_wavegen(self, ws);
+    channel_update_wavegen(self, ws, !self->sustain);
     free_wavegen(ws);
-    get_wavegen_state(ws)->cmds |= WAVEGEN_CMD_RESET_ENVELOPE;
 }
 
 void channel_note_on(Channel *self, char note, float velocity) {
@@ -91,16 +91,27 @@ void channel_note_on(Channel *self, char note, float velocity) {
     ws->note = note;
     ws->velocity = velocity;
     ws->pressed = true;
-
-    channel_update_wavegen(self, ws);
-    get_wavegen_state(ws)->cmds |= WAVEGEN_CMD_RESET_ENVELOPE;
+    channel_update_wavegen(self, ws, true);
 }
 
 void channel_update_wavegens(Channel *self) {
     for (List *item = self->status_list.next; item; item = item->next) {
         WavegenStatus *ws = container_of(item, WavegenStatus, channel_node);
 
-        channel_update_wavegen(self, ws);
+        channel_update_wavegen(self, ws, false);
+    }
+}
+
+void channel_set_sustain(Channel *self, bool enabled) {
+    bool release = self->sustain && !enabled;
+
+    self->sustain = enabled;
+    if (release) {
+        for (List *item = self->status_list.next; item; item = item->next) {
+            WavegenStatus *ws = container_of(item, WavegenStatus, channel_node);
+
+            channel_update_wavegen(self, ws, !ws->pressed);
+        }
     }
 }
 
@@ -109,10 +120,7 @@ void channel_all_notes_off(Channel *self, bool reset_envelopes) {
         WavegenStatus *ws = container_of(item, WavegenStatus, channel_node);
 
         ws->pressed = false;
-        channel_update_wavegen(self, ws);
-        if (reset_envelopes) {
-            get_wavegen_state(ws)->cmds |= WAVEGEN_CMD_RESET_ENVELOPE;
-        }
+        channel_update_wavegen(self, ws, true);
     }
 }
 

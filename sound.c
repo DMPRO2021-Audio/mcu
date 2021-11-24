@@ -5,14 +5,14 @@
 #include "sound.h"
 
 static const EnvelopeStep piano_press_envelope[] = {
-    { .rate = 700, .duration = 180, },
-    { .rate = -140, .duration = 255, },
-    { .rate = -45, .duration = 255, },
-    { .rate = -20,  .duration = 255, },
+    { .rate = 1400, .duration = 50, },
+    { .rate = -1400, .duration = 25, },
+    { .rate = -40, .duration = 255, },
+    { .rate = -19,  .duration = 255, },
     { .rate = -10,  .duration = 255, },
-    { .rate = -5,  .duration = 255, },
-    { .rate = -0,  .duration = 255, },
-    { .rate = -5,  .duration = 255, },
+    { .rate = -6,  .duration = 255, },
+    { .rate = -3,  .duration = 255, },
+    { .rate = -1,  .duration = 255, },
 };
 
 static const EnvelopeStep organ_press_envelope[] = {
@@ -38,14 +38,8 @@ static const EnvelopeStep tremolo_press_envelope[] = {
 };
 
 static const EnvelopeStep release_envelope[] = {
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
-    { .rate = -60,   .duration = 255, },
+    { .rate = -6500,   .duration = 100, },
+    {0},
 };
 
 static const EnvelopeStep tremolo_release_envelope[] = {
@@ -60,12 +54,12 @@ static const EnvelopeStep tremolo_release_envelope[] = {
 };
 
 static const EnvelopeStep quick_press_envelope[] = {
-    { .rate = 10000, .duration = 255, },
+    { .rate = 10000, .duration = 32, },
     {0}
 };
 
 static const EnvelopeStep quick_release_envelope[] = {
-    { .rate = -10000, .duration = 255, },
+    { .rate = -10000, .duration = 32, },
     {0}
 };
 

@@ -145,8 +145,8 @@ static void handle_control_change(char status) {
         break;
     case MIDI_CC_SUSTAIN_KEY:
     case MIDI_CC_SUSTAIN_PEDAL:
-        c->sustain = !value;
-        break;
+        channel_set_sustain(c, !value);
+        return;
     case MIDI_CC_ALL_SOUND_OFF:
         channel_all_notes_off(c, true);
         return;
